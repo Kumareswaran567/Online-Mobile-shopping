@@ -4,259 +4,224 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout - MobileHub</title>
+
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Arial', sans-serif; background: #f5f5f5; }
-        
+        body { font-family: Arial, sans-serif; background: #f5f5f5; }
+
         .navbar {
             background: linear-gradient(45deg, #667eea, #764ba2);
             color: white;
             padding: 1rem 0;
         }
-        
+
         .nav-container {
             max-width: 1200px;
-            margin: 0 auto;
+            margin: auto;
             padding: 0 20px;
             display: flex;
             justify-content: space-between;
-            align-items: center;
         }
-        
+
         .container {
             max-width: 800px;
             margin: 40px auto;
             padding: 0 20px;
         }
-        
+
         .checkout-container {
             background: white;
-            border-radius: 20px;
-            padding: 40px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-        }
-        
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 30px;
-            font-size: 2rem;
-        }
-        
-        .order-summary {
-            background: #f8f9fa;
-            padding: 25px;
+            padding: 30px;
             border-radius: 15px;
-            margin-bottom: 30px;
         }
-        
+
+        h1 { text-align: center; margin-bottom: 20px; }
+
+        .order-summary {
+            background: #eee;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+        }
+
         .summary-item {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 10px;
         }
-        
-        .total { font-size: 1.5rem; font-weight: bold; color: #e74c3c; }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: #333;
-            font-weight: 500;
-        }
-        
+
+        .form-group { margin-bottom: 15px; }
+
         input {
             width: 100%;
-            padding: 15px;
-            border: 2px solid #e1e5e9;
-            border-radius: 10px;
-            font-size: 1rem;
-            transition: border-color 0.3s;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
         }
-        
-        input:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        
-        input.error { border-color: #e74c3c; }
+
+        input.error { border-color: red; }
+
         .error-message {
-            color: #e74c3c;
+            color: red;
             font-size: 0.9rem;
-            margin-top: 5px;
             display: none;
         }
-        
+
         .pay-btn {
             width: 100%;
-            background: linear-gradient(45deg, #27ae60, #2ecc71);
+            padding: 15px;
+            background: green;
             color: white;
             border: none;
-            padding: 20px;
-            font-size: 1.3rem;
-            border-radius: 15px;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-top: 20px;
-        }
-        
-        .pay-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
-        }
-        
-        .pay-btn:disabled {
-            background: #bdc3c7;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        .loading {
-            opacity: 0.6;
-            pointer-events: none;
-        }
-        
-        .api-error {
-            background: #fee;
-            color: #c33;
-            padding: 15px;
             border-radius: 10px;
-            margin-bottom: 20px;
-            display: none;
-            text-align: center;
-        }
-        
-        .api-error.show {
-            display: block;
-        }
-        
-        @media (max-width: 768px) {
-            .checkout-container { padding: 25px; }
+            cursor: pointer;
         }
     </style>
 </head>
-<body>
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="logo">📱 MobileHub</div>
-            <a href="details.html" class="back-btn">← Back</a>
-        </div>
-    </nav>
-    
-    <div class="container">
-        <div class="checkout-container">
-            <h1>🛒 Checkout</h1>
-            
-            <div class="order-summary">
-                <div class="summary-item">
-                    <span id="orderProduct"></span>
-                    <span id="orderPrice"></span>
-                </div>
-                <div class="summary-item total">
-                    <span>Total Amount:</span>
-                    <span id="totalPrice"></span>
-                </div>
-            </div>
-            
-            <div class="api-error" id="apiError"></div>
-            
-            <form id="checkoutForm">
-                <div class="form-group">
-                    <label>Full Name *</label>
-                    <input type="text" id="name" required>
-                    <div class="error-message" id="nameError">Please enter your full name</div>
-                </div>
-                
-                <div class="form-group">
-                    <label>Email *</label>
-                    <input type="email" id="email" required>
-                    <div class="error-message" id="emailError">Please enter valid email</div>
-                </div>
-                
-                <div class="form-group">
-                    <label>ATM Card Number (16 digits) *</label>
-                    <input type="text" id="cardNumber" maxlength="19" required>
-                    <div class="error-message" id="cardError">Please enter valid 16-digit card number</div>
-                </div>
-                
-                <button type="submit" class="pay-btn" id="payBtn">Pay Now Securely</button>
-            </form>
-        </div>
-    </div>
 
-    <script src="config.js"></script>
-    <script>
-        const mobile = JSON.parse(sessionStorage.getItem('selectedMobile'));
+<body>
+
+<nav class="navbar">
+    <div class="nav-container">
+        <div>📱 MobileHub</div>
+        <a href="details.html" style="color:white;">← Back</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="checkout-container">
+
+        <h1>Checkout</h1>
+
+        <div class="order-summary">
+            <div class="summary-item">
+                <span id="orderProduct"></span>
+                <span id="orderPrice"></span>
+            </div>
+            <div class="summary-item">
+                <strong>Total:</strong>
+                <strong id="totalPrice"></strong>
+            </div>
+        </div>
+
+        <div class="error-message" id="apiError" style="display:none; margin-bottom:12px;"></div>
+
+        <form id="checkoutForm">
+
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" id="name">
+                <div class="error-message" id="nameError">Enter valid name</div>
+            </div>
+
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="email">
+                <div class="error-message" id="emailError">Enter valid email</div>
+            </div>
+
+            <div class="form-group">
+                <label>Card Number</label>
+                <input type="text" id="cardNumber" maxlength="19">
+                <div class="error-message" id="cardError">Enter 16-digit card</div>
+            </div>
+
+            <!-- ✅ PIN FIELD -->
+            <div class="form-group">
+                <label>ATM PIN</label>
+                <input type="password" id="pin" maxlength="4">
+                <div class="error-message" id="pinError">Enter 4-digit PIN</div>
+            </div>
+
+            <button class="pay-btn" id="payBtn" type="submit">Pay Now</button>
+
+        </form>
+
+    </div>
+</div>
+
+<script src="config.js"></script>
+<script>
+const mobile = JSON.parse(sessionStorage.getItem('selectedMobile'));
+
 if (mobile) {
-    document.getElementById('orderProduct').textContent = `${mobile.brand} ${mobile.model}`;
-    document.getElementById('orderPrice').textContent = `₹${mobile.price.toLocaleString()}`;
-    document.getElementById('totalPrice').textContent = `₹${mobile.price.toLocaleString()}`;
+    document.getElementById('orderProduct').textContent =
+        mobile.brand + " " + mobile.model;
+    document.getElementById('orderPrice').textContent =
+        "₹" + mobile.price;
+    document.getElementById('totalPrice').textContent =
+        "₹" + mobile.price;
 }
 
+function setApiError(msg) {
+    const el = document.getElementById('apiError');
+    el.textContent = msg;
+    el.style.display = 'block';
+}
 
-const cardInput = document.getElementById('cardNumber');
-cardInput.addEventListener('input', function (e) {
-    let value = e.target.value.replace(/\D/g, '');  // Only digits
-    let formattedValue = value.match(/.{1,4}/g)?.join(' ') || '';
-    e.target.value = formattedValue;
+function clearApiError() {
+    const el = document.getElementById('apiError');
+    el.textContent = '';
+    el.style.display = 'none';
+}
+
+// Format card number
+document.getElementById('cardNumber').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    e.target.value = value.match(/.{1,4}/g)?.join(' ') || '';
 });
 
+// Only numbers for PIN
+document.getElementById('pin').addEventListener('input', function(e) {
+    e.target.value = e.target.value.replace(/\D/g, '');
+});
 
+// Form validation
 document.getElementById('checkoutForm').addEventListener('submit', function(e) {
     e.preventDefault();
-    
+    clearApiError();
+
     let isValid = true;
 
     const name = document.getElementById('name').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const card = document.getElementById('cardNumber').value.replace(/\s/g,'');
+    const pin = document.getElementById('pin').value;
+
+    // Name
     if (name.length < 2) {
-        document.getElementById('name').classList.add('error');
         document.getElementById('nameError').style.display = 'block';
         isValid = false;
-    } else {
-        document.getElementById('name').classList.remove('error');
-        document.getElementById('nameError').style.display = 'none';
-    }
-    
-    // Validate email
-    const email = document.getElementById('email').value.trim();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-        document.getElementById('email').classList.add('error');
+    } else document.getElementById('nameError').style.display = 'none';
+
+    // Email
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         document.getElementById('emailError').style.display = 'block';
         isValid = false;
-    } else {
-        document.getElementById('email').classList.remove('error');
-        document.getElementById('emailError').style.display = 'none';
-    }
-    
-    // Validate card number
-    const rawCardNumber = document.getElementById('cardNumber').value;
-    const cardNumber = rawCardNumber.replace(/\s/g, ''); // remove spaces
+    } else document.getElementById('emailError').style.display = 'none';
 
-    if (!/^\d{16}$/.test(cardNumber)) { 
-        document.getElementById('cardNumber').classList.add('error');
+    // Card
+    if (!/^\d{16}$/.test(card)) {
         document.getElementById('cardError').style.display = 'block';
         isValid = false;
-    } else {    
-        document.getElementById('cardNumber').classList.remove('error');
-        document.getElementById('cardError').style.display = 'none';
-    }
+    } else document.getElementById('cardError').style.display = 'none';
+
+    // PIN
+    if (!/^\d{4}$/.test(pin)) {
+        document.getElementById('pinError').style.display = 'block';
+        isValid = false;
+    } else document.getElementById('pinError').style.display = 'none';
 
     if (isValid) {
-        // Hide any previous errors
-        document.getElementById('apiError').classList.remove('show');
-        
-        // Disable button and show loading state
+        if (!mobile) {
+            setApiError('No selected mobile found. Please go back and select a mobile again.');
+            return;
+        }
+
         const payBtn = document.getElementById('payBtn');
         payBtn.disabled = true;
+        const originalText = payBtn.textContent;
         payBtn.textContent = 'Processing...';
-        document.getElementById('checkoutForm').classList.add('loading');
-        
-        // Prepare order data
+
         const orderData = {
             mobile: {
                 id: mobile.id,
@@ -264,70 +229,48 @@ document.getElementById('checkoutForm').addEventListener('submit', function(e) {
                 model: mobile.model,
                 price: mobile.price
             },
-            customer: {
-                name: name,
-                email: email
-            },
-            cardNumber: cardNumber, // Last 4 digits only for security (you can mask this)
+            customer: { name, email },
+            cardNumber: card,
             totalAmount: mobile.price,
             timestamp: new Date().toISOString()
         };
-        
-        // Send to backend API
-        const apiUrl = getApiUrl(API_CONFIG.ENDPOINTS.CHECKOUT);
-        fetch(apiUrl, {
+
+        fetch(getApiUrl(API_CONFIG.ENDPOINTS.CHECKOUT), {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(orderData),
-            mode: 'cors'
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(orderData)
         })
-        .then(async response => {
+        .then(async (res) => {
             let data;
             try {
-                data = await response.json();
-            } catch (e) {
-                throw new Error('Invalid response from server. Is the backend running?');
+                data = await res.json();
+            } catch {
+                throw new Error('Server returned invalid response. Is the backend running?');
             }
-            if (!response.ok) {
-                throw new Error(data.message || `Server error: ${response.status}`);
-            }
+            if (!res.ok) throw new Error(data.message || `Server error: ${res.status}`);
             return data;
         })
-        .then(data => {
-            // Success - store order details and redirect
-            if (data.success && data.orderId) {
-                sessionStorage.setItem('orderDetails', JSON.stringify({
-                    ...orderData,
-                    orderId: data.orderId,
-                    orderDbId: data.id,
-                    status: data.status || 'completed',
-                    order: data.order || null
-                }));
-                window.location.href = 'success.html';
-            } else {
-                throw new Error(data.message || 'Invalid response from server');
+        .then((data) => {
+            if (!data?.success || !data?.orderId) {
+                throw new Error(data?.message || 'Order not saved. Invalid response from server.');
             }
+            sessionStorage.setItem('orderDetails', JSON.stringify({
+                ...orderData,
+                orderId: data.orderId,
+                orderDbId: data.id,
+                status: data.status || 'completed',
+                order: data.order || null
+            }));
+            window.location.href = 'success.html';
         })
-        .catch(error => {
-            // Handle "Failed to fetch" - backend not running or CORS
-            console.error('Checkout error:', error);
-            let msg = error.message || 'Failed to process order. Please try again.';
-            if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
-                msg = 'Cannot connect to server. Please start the backend: open Terminal, run "cd backend" then "npm run dev", and make sure it shows "Server running on http://localhost:4000".';
-            }
-            document.getElementById('apiError').textContent = msg;
-            document.getElementById('apiError').classList.add('show');
-            
+        .catch((err) => {
+            setApiError(err.message || 'Failed to save order to database.');
             payBtn.disabled = false;
-            payBtn.textContent = 'Pay Now Securely';
-            document.getElementById('checkoutForm').classList.remove('loading');
-            document.getElementById('apiError').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            payBtn.textContent = originalText;
         });
     }
 });
-    </script>
+</script>
+
 </body>
 </html>
-        

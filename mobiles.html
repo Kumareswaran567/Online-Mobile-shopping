@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>All Mobiles - MobileHub</title>
+
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
             font-family: 'Arial', sans-serif;
             background: #f5f5f5;
-            line-height: 1.6;
         }
         
         .navbar {
@@ -19,116 +19,116 @@
             padding: 1rem 0;
             position: sticky;
             top: 0;
-            z-index: 100;
         }
         
         .nav-container {
             max-width: 1200px;
-            margin: 0 auto;
+            margin: auto;
             padding: 0 20px;
             display: flex;
             justify-content: space-between;
-            align-items: center;
         }
-        
-        .logo { font-size: 1.5rem; font-weight: bold; }
-        
-        .back-btn {
-            background: rgba(255,255,255,0.2);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 25px;
-            cursor: pointer;
-            text-decoration: none;
-            transition: all 0.3s;
-        }
-        
-        .back-btn:hover { background: rgba(255,255,255,0.3); }
-        
+
         .container {
             max-width: 1200px;
-            margin: 0 auto;
-            padding: 40px 20px;
+            margin: auto;
+            padding: 30px;
         }
-        
+
         h1 {
             text-align: center;
-            margin-bottom: 40px;
-            color: #333;
-            font-size: 2.5rem;
+            margin-bottom: 20px;
         }
-        
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
-            margin-bottom: 40px;
+
+        /* SORT + FILTER */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
-        
+
+        select {
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+       .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 250px));
+        justify-content: center;
+        gap: 20px;
+        }
+
         .card {
             background: white;
-            border-radius: 15px;
+            border-radius: 10px;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
             cursor: pointer;
+            width: 250px;
         }
-        
-        .card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-        }
-        
+
         .card img {
             width: 100%;
             height: 200px;
             object-fit: cover;
         }
-        
+
         .card-content {
-            padding: 20px;
+            padding: 15px;
         }
-        
-        .brand { font-size: 1.1rem; color: #667eea; font-weight: bold; }
-        .model { font-size: 1.3rem; margin: 5px 0; color: #333; }
-        .price {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #e74c3c;
-            margin: 10px 0;
-        }
-        
+
+        .brand { color: #667eea; font-weight: bold; }
+        .model { font-size: 1.2rem; }
+        .price { color: red; font-weight: bold; }
+
         .details-btn {
             width: 100%;
-            background: linear-gradient(45deg, #667eea, #764ba2);
+            padding: 10px;
+            background: #667eea;
             color: white;
             border: none;
-            padding: 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: all 0.3s;
-        }
-        
-        .details-btn:hover { transform: scale(1.02); }
-        
-        @media (max-width: 768px) {
-            .grid { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
-            h1 { font-size: 2rem; }
+            margin-top: 10px;
+            border-radius: 5px;
         }
     </style>
 </head>
+
 <body>
+
     <nav class="navbar">
         <div class="nav-container">
-            <div class="logo">📱 MobileHub</div>
-            <a href="index.html" class="back-btn">← Back to Home</a>
+            <div>📱 MobileHub</div>
+            <a href="index.html" style="color:white;">← Back</a>
         </div>
-    </nav>  
-    
+    </nav>
+
     <div class="container">
-        <h1>All Latest Mobiles</h1>
+        <h1>All Mobiles</h1>
+
+        <!-- SORT + FILTER -->
+        <div class="controls">
+            <select id="sortOption" onchange="applyFilterSort()">
+                <option value="">Sort By</option>
+                <option value="priceLow">Price Low → High</option>
+                <option value="priceHigh">Price High → Low</option>
+                <option value="nameAZ">Name A → Z</option>
+                <option value="nameZA">Name Z → A</option>
+            </select>
+
+            <select id="brandFilter" onchange="applyFilterSort()">
+                <option value="">All Brands</option>
+                <option value="Samsung">Samsung</option>
+                <option value="iPhone">iPhone</option>
+                <option value="OnePlus">OnePlus</option>
+                <option value="Vivo">Vivo</option>
+                <option value="Oppo">Oppo</option>
+                <option value="Realme">Realme</option>
+            </select>
+        </div>
+
         <div class="grid" id="mobileGrid"></div>
     </div>
 
@@ -153,31 +153,57 @@
             {id:17, brand:'Asus', model:'ROG Phone 8', price:'99999', img:'https://i.pinimg.com/736x/5b/1d/f7/5b1df7b344099607ccc8216a0e18d3aa.jpg', ram:'16GB', storage:'512GB', camera:'50MP', battery:'5500mAh'},
             {id:18, brand:'Sony', model:'Xperia 1 VI', price:'139999', img:'https://i.pinimg.com/736x/d0/c6/d7/d0c6d75a28520f627fae7e5db3e96b63.jpg', ram:'12GB', storage:'256GB', camera:'48MP', battery:'5000mAh'},
             {id:19, brand:'Nokia', model:'XR21', price:'44999', img:'https://i.pinimg.com/736x/9b/dd/e8/9bdde88fd52bd8430b11ba2e2fb07c25.jpg', ram:'6GB', storage:'128GB', camera:'64MP', battery:'4800mAh'},
-            {id:20, brand:'Infinix', model:'Zero Ultra', price:'32999', img:'https://i.pinimg.com/736x/4d/23/c5/4d23c5820b6b492dbc727e0c7dd255cb.jpg', ram:'8GB', storage:'256GB', camera:'200MP', battery:'5000mAh'}
+            {id:20, brand:'Infinix', model:'Zero Ultra', price:'32999', img:'https://i.pinimg.com/736x/4d/23/c5/4d23c5820b6b492dbc727e0c7dd255cb.jpg', ram:'8GB', storage:'256GB', camera:'200MP', battery:'5000mAh'}     
         ];
 
-        function createMobileCard(mobile) {
+        function createMobileCard(m) {
             return `
-                <div class="card" onclick="viewDetails(${mobile.id})">
-                    <img src="${mobile.img}" alt="${mobile.brand} ${mobile.model}">
+                <div class="card" onclick="viewDetails(${m.id})">
+                    <img src="${m.img}">
                     <div class="card-content">
-                        <div class="brand">${mobile.brand}</div>
-                        <div class="model">${mobile.model}</div>
-                        <div class="price">₹${mobile.price.toLocaleString()}</div>
+                        <div class="brand">${m.brand}</div>
+                        <div class="model">${m.model}</div>
+                        <div class="price">₹${m.price.toLocaleString()}</div>
                         <button class="details-btn">View Details</button>
                     </div>
                 </div>
             `;
         }
 
-        document.getElementById('mobileGrid').innerHTML = mobiles.map(createMobileCard).join('');
+        function displayMobiles(list) {
+            document.getElementById('mobileGrid').innerHTML =
+                list.map(createMobileCard).join('');
+        }
+
+        function applyFilterSort() {
+            let result = [...mobiles];
+
+            const sort = document.getElementById('sortOption').value;
+            const brand = document.getElementById('brandFilter').value;
+
+            // Filter
+            if (brand) {
+                result = result.filter(m => m.brand === brand);
+            }
+
+            // Sort
+            if (sort === 'priceLow') result.sort((a,b)=>a.price-b.price);
+            else if (sort === 'priceHigh') result.sort((a,b)=>b.price-a.price);
+            else if (sort === 'nameAZ') result.sort((a,b)=>a.model.localeCompare(b.model));
+            else if (sort === 'nameZA') result.sort((a,b)=>b.model.localeCompare(a.model));
+
+            displayMobiles(result);
+        }
 
         function viewDetails(id) {
             const mobile = mobiles.find(m => m.id === id);
             sessionStorage.setItem('selectedMobile', JSON.stringify(mobile));
             window.location.href = 'details.html';
         }
-    </script>
-</body>
 
+        // Initial load
+        displayMobiles(mobiles);
+    </script>
+
+</body>
 </html>

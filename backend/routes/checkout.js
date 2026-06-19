@@ -47,9 +47,9 @@ router.post('/', async (req, res) => {
             cardNumber: cleanCardNumber,
             totalAmount
         };
-
+        console.log("Before create");
         const order = await Order.create(orderData);
-
+        console.log("After create");
 
         res.status(201).json({
             success: true,

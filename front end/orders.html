@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders - MobileHub</title>
+    <meta name="description" content="View your MobileHub order history and manage returns.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #667eea;
+            --primary-dark: #764ba2;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --teal: #06b6d4;
+            --bg: #0f0f1a;
+            --card: #1a1a2e;
+            --card2: #16213e;
+            --border: rgba(102,126,234,0.18);
+            --text: #e2e8f0;
+            --muted: #94a3b8;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        /* ── Navbar ── */
+        nav {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            padding: 0 24px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 30px rgba(102,126,234,0.35);
+        }
+        .nav-brand { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px; }
+        .nav-links a {
+            color: rgba(255,255,255,0.85);
+            text-decoration: none;
+            margin-left: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+        .nav-links a:hover { color: #fff; }
+
+        /* ── Hero ── */
+        .hero {
+            background: linear-gradient(135deg, rgba(102,126,234,0.12), rgba(118,75,162,0.12));
+            border-bottom: 1px solid var(--border);
+            padding: 40px 24px 32px;
+            text-align: center;
+        }
+        .hero h1 { font-size: 2rem; font-weight: 800; margin-bottom: 8px; }
+        .hero p { color: var(--muted); font-size: 1rem; }
+
+        /* ── Lookup Card ── */
+        .container { max-width: 900px; margin: 0 auto; padding: 32px 20px; }
+
+        .lookup-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 32px;
+            margin-bottom: 36px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+        }
+        .lookup-card h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 20px; color: var(--primary); }
+
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+        @media(max-width:600px){ .form-row { grid-template-columns: 1fr; } }
+
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 6px;
+        }
+        .form-group input {
+            width: 100%;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 14px;
+            color: var(--text);
+            font-size: 0.95rem;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-group input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.15);
+        }
+        .form-group input.error { border-color: var(--danger); }
+
+        .lookup-btn {
+            width: 100%;
+            padding: 13px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.2s;
+        }
+        .lookup-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .lookup-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            margin-top: 14px;
+            display: none;
+        }
+        .alert.error { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; }
+        .alert.success { background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3); color: #6ee7b7; }
+
+        /* ── Orders List ── */
+        #ordersSection { display: none; }
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .count-badge {
+            background: rgba(102,126,234,0.2);
+            color: var(--primary);
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        /* ── Order Card ── */
+        .order-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 18px;
+            transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+            animation: slideIn 0.4s ease both;
+        }
+        .order-card:hover { border-color: rgba(102,126,234,0.4); transform: translateY(-2px); box-shadow: 0 12px 40px rgba(0,0,0,0.25); }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .order-id { font-size: 0.78rem; color: var(--muted); font-weight: 600; letter-spacing: 0.04em; }
+        .order-product { font-size: 1.15rem; font-weight: 700; margin-top: 2px; }
+
+        .badges { display: flex; gap: 8px; flex-wrap: wrap; }
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .badge-completed  { background: rgba(16,185,129,0.15);  color: #6ee7b7; }
+        .badge-delivered  { background: rgba(6,182,212,0.15);   color: #67e8f9; }
+        .badge-pending    { background: rgba(245,158,11,0.15);  color: #fcd34d; }
+        .badge-approved   { background: rgba(16,185,129,0.15);  color: #6ee7b7; }
+        .badge-rejected   { background: rgba(239,68,68,0.15);   color: #fca5a5; }
+        .badge-return_requested { background: rgba(245,158,11,0.15); color: #fcd34d; }
+        .badge-return_approved  { background: rgba(16,185,129,0.15); color: #6ee7b7; }
+        .badge-return_rejected  { background: rgba(239,68,68,0.15);  color: #fca5a5; }
+        .badge-refund_completed { background: rgba(6,182,212,0.15);  color: #67e8f9; }
+
+        .order-meta {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        .meta-item { }
+        .meta-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em; margin-bottom: 3px; }
+        .meta-value { font-size: 0.95rem; font-weight: 600; }
+        .meta-value.price { color: var(--success); }
+
+        .order-footer { display: flex; justify-content: flex-end; gap: 10px; flex-wrap: wrap; }
+
+        .btn {
+            padding: 9px 20px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            border: none;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .btn-return {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: #fff;
+        }
+        .btn-return:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(239,68,68,0.35); }
+        .btn-return:disabled {
+            background: rgba(100,100,120,0.25);
+            color: var(--muted);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .btn-status {
+            background: rgba(6,182,212,0.12);
+            color: var(--teal);
+            border: 1px solid rgba(6,182,212,0.3);
+        }
+        .btn-status:hover { background: rgba(6,182,212,0.2); }
+        .btn-view {
+            background: rgba(102,126,234,0.12);
+            color: var(--primary);
+            border: 1px solid rgba(102,126,234,0.3);
+        }
+        .btn-view:hover { background: rgba(102,126,234,0.2); }
+
+        .expired-label { font-size: 0.75rem; color: var(--danger); font-weight: 600; align-self: center; }
+        .return-exists-label { font-size: 0.75rem; color: var(--warning); font-weight: 600; align-self: center; }
+
+        /* ── Days Pill ── */
+        .days-pill {
+            font-size: 0.72rem;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-weight: 700;
+        }
+        .days-ok   { background: rgba(16,185,129,0.15); color: #6ee7b7; }
+        .days-warn { background: rgba(245,158,11,0.15); color: #fcd34d; }
+        .days-gone { background: rgba(239,68,68,0.12);  color: #fca5a5; }
+
+        /* ── Empty ── */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--muted);
+        }
+        .empty-state .icon { font-size: 3.5rem; margin-bottom: 16px; }
+        .empty-state h3 { font-size: 1.2rem; font-weight: 700; margin-bottom: 8px; color: var(--text); }
+
+        /* ── Spinner ── */
+        .spinner {
+            display: none;
+            width: 22px; height: 22px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .divider { height: 1px; background: var(--border); margin: 16px 0; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="nav-brand">📱 MobileHub</div>
+    <div class="nav-links">
+        <a href="index.html">🏠 Home</a>
+        <a href="admin.html">🛡️ Admin</a>
+    </div>
+</nav>
+
+<div class="hero">
+    <h1>📦 My Orders</h1>
+    <p>Enter your name and email to view your order history</p>
+</div>
+
+<div class="container">
+
+    <!-- Lookup Form -->
+    <div class="lookup-card">
+        <h2>🔍 Find My Orders</h2>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Your Name</label>
+                <input type="text" id="lookupName" placeholder="Enter your full name" autocomplete="name">
+            </div>
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="lookupEmail" placeholder="Enter your email" autocomplete="email">
+            </div>
+        </div>
+        <button class="lookup-btn" id="lookupBtn" onclick="lookupOrders()">
+            <span id="lookupBtnText">🔍 View My Orders</span>
+            <div class="spinner" id="lookupSpinner"></div>
+        </button>
+        <div class="alert error" id="lookupError"></div>
+        <div class="alert success" id="lookupSuccess"></div>
+    </div>
+
+    <!-- Orders List -->
+    <div id="ordersSection">
+        <div class="section-title">
+            📋 Your Orders <span class="count-badge" id="orderCount">0</span>
+        </div>
+        <div id="ordersList"></div>
+    </div>
+
+</div>
+
+<script src="config.js"></script>
+<script>
+    // Pre-fill from sessionStorage if coming from checkout
+    window.addEventListener('DOMContentLoaded', () => {
+        const od = JSON.parse(sessionStorage.getItem('orderDetails') || 'null');
+        if (od?.customer) {
+            document.getElementById('lookupName').value  = od.customer.name  || '';
+            document.getElementById('lookupEmail').value = od.customer.email || '';
+        }
+    });
+
+    function showAlert(id, msg, type) {
+        const el = document.getElementById(id);
+        el.textContent = msg;
+        el.style.display = 'block';
+        el.className = `alert ${type}`;
+    }
+    function hideAlerts() {
+        ['lookupError','lookupSuccess'].forEach(id => {
+            document.getElementById(id).style.display = 'none';
+        });
+    }
+
+    function formatDate(dateStr) {
+        if (!dateStr) return '—';
+        return new Date(dateStr).toLocaleDateString('en-IN', {
+            day: '2-digit', month: 'short', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        });
+    }
+
+    function badgeClass(status) {
+        const map = {
+            completed: 'badge-completed',
+            delivered: 'badge-delivered',
+            pending:   'badge-pending',
+            return_requested: 'badge-return_requested',
+            return_approved:  'badge-return_approved',
+            return_rejected:  'badge-return_rejected',
+            refund_completed: 'badge-refund_completed',
+            approved: 'badge-approved',
+            rejected: 'badge-rejected',
+        };
+        return map[status] || 'badge-pending';
+    }
+    function badgeLabel(status) {
+        const map = {
+            completed: '✅ Completed',
+            delivered: '🚚 Delivered',
+            pending:   '⏳ Pending',
+            return_requested: '↩️ Return Requested',
+            return_approved:  '✅ Return Approved',
+            return_rejected:  '❌ Return Rejected',
+            refund_completed: '💳 Refund Completed',
+        };
+        return map[status] || status;
+    }
+
+    function daysLabel(d, expired) {
+        if (expired) return `<span class="days-pill days-gone">⛔ Expired</span>`;
+        if (d >= 10)  return `<span class="days-pill days-ok">✅ ${15 - d} days left</span>`;
+        if (d >= 5)   return `<span class="days-pill days-warn">⚠️ ${15 - d} days left</span>`;
+        return `<span class="days-pill days-ok">✅ ${15 - d} days left</span>`;
+    }
+
+    function renderOrders(orders) {
+        const list = document.getElementById('ordersList');
+        document.getElementById('orderCount').textContent = orders.length;
+
+        if (orders.length === 0) {
+            list.innerHTML = `<div class="empty-state">
+                <div class="icon">📭</div>
+                <h3>No orders found</h3>
+                <p>We couldn't find any orders for this name and email combination.</p>
+            </div>`;
+            return;
+        }
+
+        list.innerHTML = orders.map((o, i) => {
+            const hasReturn     = !!o.returnRecord;
+            const returnStatus  = o.returnRecord?.return_status || '';
+            const refundStatus  = o.returnRecord?.refund_status || '';
+
+            let footerHTML = '';
+            if (o.returnExpired && !hasReturn) {
+                footerHTML = `<span class="expired-label">⛔ Return period expired</span>`;
+            } else if (hasReturn) {
+                footerHTML = `
+                    <span class="return-exists-label">↩️ Return: <strong>${returnStatus.replace('_',' ').toUpperCase()}</strong></span>
+                    <a href="refund-status.html?orderId=${encodeURIComponent(o.orderId)}" class="btn btn-status">📊 View Return Status</a>`;
+            } else if (o.returnEligible) {
+                footerHTML = `
+                    <a href="return-request.html?orderId=${encodeURIComponent(o.orderId)}" class="btn btn-return">↩️ Return Mobile</a>`;
+            } else if (!o.returnExpired) {
+                footerHTML = `<span class="expired-label">📦 Not yet delivered</span>`;
+            }
+
+            return `
+            <div class="order-card" style="animation-delay:${i * 0.07}s">
+                <div class="order-header">
+                    <div>
+                        <div class="order-id">ORDER ID: ${o.orderId}</div>
+                        <div class="order-product">${o.product}</div>
+                    </div>
+                    <div class="badges">
+                        <span class="badge ${badgeClass(o.status)}">${badgeLabel(o.status)}</span>
+                        <span class="badge ${badgeClass(o.deliveryStatus || 'delivered')}">${badgeLabel(o.deliveryStatus || 'delivered')}</span>
+                    </div>
+                </div>
+                <div class="order-meta">
+                    <div class="meta-item">
+                        <div class="meta-label">Purchase Date</div>
+                        <div class="meta-value">${formatDate(o.purchaseDate)}</div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="meta-label">Amount Paid</div>
+                        <div class="meta-value price">₹${parseFloat(o.totalAmount).toLocaleString('en-IN')}</div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="meta-label">Return Window</div>
+                        <div class="meta-value">${daysLabel(o.daysElapsed, o.returnExpired)}</div>
+                    </div>
+                </div>
+                <div class="divider"></div>
+                <div class="order-footer">
+                    <a href="refund-status.html?orderId=${encodeURIComponent(o.orderId)}" class="btn btn-view">🔍 Order Details</a>
+                    ${footerHTML}
+                </div>
+            </div>`;
+        }).join('');
+
+        document.getElementById('ordersSection').style.display = 'block';
+    }
+
+    async function lookupOrders() {
+        hideAlerts();
+        const name  = document.getElementById('lookupName').value.trim();
+        const email = document.getElementById('lookupEmail').value.trim();
+
+        if (!name) return showAlert('lookupError', '⚠️ Please enter your name.', 'error');
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+            return showAlert('lookupError', '⚠️ Please enter a valid email address.', 'error');
+
+        const btn      = document.getElementById('lookupBtn');
+        const btnText  = document.getElementById('lookupBtnText');
+        const spinner  = document.getElementById('lookupSpinner');
+        btn.disabled   = true;
+        btnText.style.display = 'none';
+        spinner.style.display = 'block';
+
+        try {
+            const res  = await fetch(getApiUrl(API_CONFIG.ENDPOINTS.RETURNS_MY_ORDERS), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email })
+            });
+            const data = await res.json();
+
+            if (!res.ok || !data.success) {
+                showAlert('lookupError', data.message || 'No orders found.', 'error');
+                document.getElementById('ordersSection').style.display = 'none';
+            } else {
+                showAlert('lookupSuccess', `✅ Found ${data.count} order(s) for ${name}`, 'success');
+                renderOrders(data.orders);
+            }
+        } catch (err) {
+            showAlert('lookupError', '❌ Could not connect to server. Is the backend running?', 'error');
+        } finally {
+            btn.disabled  = false;
+            btnText.style.display = 'inline';
+            spinner.style.display = 'none';
+        }
+    }
+
+    // Allow Enter key to trigger lookup
+    ['lookupName','lookupEmail'].forEach(id => {
+        document.getElementById(id).addEventListener('keypress', e => {
+            if (e.key === 'Enter') lookupOrders();
+        });
+    });
+</script>
+</body>
+</html>

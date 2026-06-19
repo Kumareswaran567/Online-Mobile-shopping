@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Return & Refund Status - MobileHub</title>
+    <meta name="description" content="Track your return request and refund status for your MobileHub purchase.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #667eea; --primary-dark: #764ba2;
+            --success: #10b981; --warning: #f59e0b;
+            --danger: #ef4444; --teal: #06b6d4;
+            --bg: #0f0f1a; --card: #1a1a2e; --card2: #16213e;
+            --border: rgba(102,126,234,0.18); --text: #e2e8f0; --muted: #94a3b8;
+        }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+        nav {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            padding: 0 24px; height: 64px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 4px 30px rgba(102,126,234,0.35);
+        }
+        .nav-brand { font-size: 1.4rem; font-weight: 800; }
+        .nav-links a { color: rgba(255,255,255,0.85); text-decoration: none; margin-left: 20px; font-size: 0.9rem; font-weight: 500; transition: color 0.2s; }
+        .nav-links a:hover { color: #fff; }
+
+        .container { max-width: 680px; margin: 0 auto; padding: 36px 20px; }
+        .back-link { display: flex; align-items: center; gap: 6px; color: var(--muted); text-decoration: none; font-size: 0.88rem; font-weight: 600; margin-bottom: 28px; transition: color 0.2s; }
+        .back-link:hover { color: var(--primary); }
+
+        /* ── Loading ── */
+        .loading-screen { text-align: center; padding: 80px 20px; color: var(--muted); }
+        .big-spinner { width: 48px; height: 48px; border: 4px solid rgba(102,126,234,0.2); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Status Timeline ── */
+        .status-hero {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 32px;
+            margin-bottom: 22px;
+            text-align: center;
+            box-shadow: 0 12px 50px rgba(0,0,0,0.3);
+            animation: fadeIn 0.5s ease;
+        }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+        .status-icon-wrap {
+            width: 90px; height: 90px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2.6rem; margin: 0 auto 18px;
+            animation: bounceIn 0.5s ease;
+        }
+        @keyframes bounceIn { 0%{transform:scale(0)} 60%{transform:scale(1.1)} 100%{transform:scale(1)} }
+
+        .status-pending  .status-icon-wrap { background: rgba(245,158,11,0.15); }
+        .status-approved .status-icon-wrap { background: rgba(16,185,129,0.15); }
+        .status-rejected .status-icon-wrap { background: rgba(239,68,68,0.12); }
+        .status-refund   .status-icon-wrap { background: rgba(6,182,212,0.15); }
+
+        .status-label { font-size: 1.5rem; font-weight: 800; margin-bottom: 6px; }
+        .status-sub   { color: var(--muted); font-size: 0.9rem; }
+
+        /* ── Timeline track ── */
+        .timeline { margin: 28px 0; }
+        .timeline-item {
+            display: flex; gap: 16px; margin-bottom: 0;
+            position: relative;
+        }
+        .timeline-item:not(:last-child) .timeline-line {
+            position: absolute;
+            left: 17px; top: 38px;
+            width: 2px; height: calc(100% - 10px);
+            background: var(--border);
+        }
+        .timeline-item.done:not(:last-child) .timeline-line { background: var(--success); }
+        .timeline-item.active:not(:last-child) .timeline-line { background: linear-gradient(to bottom, var(--primary), var(--border)); }
+
+        .tl-dot {
+            width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem; border: 2px solid var(--border);
+            background: var(--card2); position: relative; z-index: 1;
+            transition: all 0.3s;
+        }
+        .timeline-item.done   .tl-dot { background: var(--success); border-color: var(--success); }
+        .timeline-item.active .tl-dot { background: rgba(102,126,234,0.15); border-color: var(--primary); animation: pulse 2s infinite; }
+        @keyframes pulse { 0%,100%{box-shadow:0 0 0 0 rgba(102,126,234,0.4)} 50%{box-shadow:0 0 0 8px rgba(102,126,234,0)} }
+
+        .tl-content { padding-bottom: 28px; flex: 1; }
+        .tl-title { font-size: 0.95rem; font-weight: 700; margin-bottom: 2px; }
+        .tl-desc  { font-size: 0.8rem; color: var(--muted); }
+        .tl-date  { font-size: 0.75rem; color: var(--primary); margin-top: 3px; font-weight: 600; }
+
+        /* ── Cards ── */
+        .info-card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 18px; padding: 24px; margin-bottom: 18px;
+            box-shadow: 0 6px 30px rgba(0,0,0,0.2);
+            animation: fadeIn 0.5s ease;
+        }
+        .info-card h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 16px; color: var(--primary); }
+
+        .info-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.88rem;
+        }
+        .info-row:last-child { border-bottom: none; }
+        .info-row .lbl { color: var(--muted); font-weight: 500; }
+        .info-row .val { font-weight: 600; text-align: right; max-width: 60%; word-break: break-word; }
+        .val.price  { color: var(--success); font-size: 1.1rem; }
+        .val.green  { color: var(--success); }
+        .val.amber  { color: var(--warning); }
+        .val.red    { color: var(--danger); }
+        .val.teal   { color: var(--teal); }
+
+        /* ── Refund Box ── */
+        .refund-box {
+            background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(6,182,212,0.08));
+            border: 1px solid rgba(16,185,129,0.25);
+            border-radius: 16px; padding: 22px; margin-bottom: 18px;
+            animation: fadeIn 0.5s ease;
+        }
+        .refund-box h3 { font-size: 0.9rem; font-weight: 700; margin-bottom: 14px; color: var(--success); }
+        .refund-amount { font-size: 2rem; font-weight: 800; color: var(--success); margin-bottom: 4px; }
+        .refund-sub    { font-size: 0.8rem; color: var(--muted); }
+
+        /* ── No Return State ── */
+        .no-return {
+            text-align: center; padding: 50px 24px;
+        }
+        .no-return .icon { font-size: 3.5rem; margin-bottom: 16px; }
+        .no-return h2 { font-size: 1.2rem; font-weight: 800; margin-bottom: 8px; }
+        .no-return p  { color: var(--muted); margin-bottom: 24px; font-size: 0.9rem; }
+
+        .link-btn {
+            display: inline-block; padding: 11px 22px; border-radius: 10px;
+            font-weight: 700; font-size: 0.88rem; text-decoration: none;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: #fff; transition: all 0.2s; margin: 4px;
+        }
+        .link-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+        .link-btn.red { background: linear-gradient(135deg, var(--danger), #dc2626); }
+
+        /* ── Admin notes ── */
+        .admin-notes {
+            background: var(--card2); border-radius: 10px; padding: 12px 14px;
+            font-size: 0.85rem; color: var(--muted); font-style: italic;
+            margin-top: 6px;
+        }
+
+        .badge-pill {
+            display: inline-block; padding: 3px 12px; border-radius: 20px;
+            font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+        }
+        .bp-pending  { background: rgba(245,158,11,0.15);  color: #fcd34d; }
+        .bp-approved { background: rgba(16,185,129,0.15);  color: #6ee7b7; }
+        .bp-rejected { background: rgba(239,68,68,0.15);   color: #fca5a5; }
+        .bp-completed{ background: rgba(6,182,212,0.15);   color: #67e8f9; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="nav-brand">📱 MobileHub</div>
+    <div class="nav-links">
+        <a href="orders.html">📦 My Orders</a>
+        <a href="index.html">🏠 Home</a>
+    </div>
+</nav>
+
+<div class="container">
+    <a href="orders.html" class="back-link">← Back to My Orders</a>
+
+    <div class="loading-screen" id="loadingScreen">
+        <div class="big-spinner"></div>
+        <p>Loading return details…</p>
+    </div>
+
+    <div id="mainContent" style="display:none"></div>
+</div>
+
+<script src="config.js"></script>
+<script>
+    const params  = new URLSearchParams(window.location.search);
+    const orderId = params.get('orderId');
+
+    function fmt(d) {
+        if (!d) return '—';
+        return new Date(d).toLocaleString('en-IN', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    }
+    function fmtDate(d) {
+        if (!d) return '—';
+        return new Date(d).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+    }
+    function rupee(n) { return '₹' + parseFloat(n || 0).toLocaleString('en-IN'); }
+
+    function timelineStep(label, desc, date, state) {
+        const icons = { done:'✅', active:'🔄', idle:'⏳' };
+        return `
+        <div class="timeline-item ${state}">
+            <div class="timeline-line"></div>
+            <div class="tl-dot">${icons[state] || '⏳'}</div>
+            <div class="tl-content">
+                <div class="tl-title">${label}</div>
+                <div class="tl-desc">${desc}</div>
+                ${date ? `<div class="tl-date">${fmt(date)}</div>` : ''}
+            </div>
+        </div>`;
+    }
+
+    function buildTimeline(ret) {
+        const rs = ret.return_status;
+        const rf = ret.refund_status;
+
+        const steps = [
+            {
+                label: 'Return Requested',
+                desc: 'You submitted a return request.',
+                date: ret.request_date,
+                state: 'done'
+            },
+            {
+                label: rs === 'approved' ? 'Return Approved' : rs === 'rejected' ? 'Return Rejected' : 'Admin Review',
+                desc:  rs === 'approved' ? 'Admin approved your return. Please ship the device back.' :
+                       rs === 'rejected' ? 'Admin rejected the return request.' :
+                       'Our team is reviewing your return request.',
+                date:  rs !== 'pending' ? ret.updated_at : null,
+                state: rs === 'pending' ? 'active' : 'done'
+            },
+            {
+                label: 'Mobile Received',
+                desc:  rs === 'approved' ? (rf === 'completed' ? 'We received your mobile device.' : 'Waiting for your device to arrive.') : 'N/A',
+                date:  rf === 'completed' ? ret.refund_date : null,
+                state: rf === 'completed' ? 'done' : (rs === 'approved' ? 'active' : 'idle')
+            },
+            {
+                label: 'Refund Processed',
+                desc:  rf === 'completed' ? `Refund of ${rupee(ret.refund_amount)} has been processed.` : 'Your refund will be processed after we receive the device.',
+                date:  ret.refund_date,
+                state: rf === 'completed' ? 'done' : 'idle'
+            }
+        ];
+
+        return `<div class="timeline">${steps.map(s => timelineStep(s.label, s.desc, s.date, s.state)).join('')}</div>`;
+    }
+
+    function statusHeroClass(rs, rf) {
+        if (rf === 'completed') return 'status-refund';
+        if (rs === 'approved')  return 'status-approved';
+        if (rs === 'rejected')  return 'status-rejected';
+        return 'status-pending';
+    }
+    function statusIcon(rs, rf) {
+        if (rf === 'completed') return '💳';
+        if (rs === 'approved')  return '✅';
+        if (rs === 'rejected')  return '❌';
+        return '⏳';
+    }
+    function statusHeading(rs, rf) {
+        if (rf === 'completed') return 'Refund Completed';
+        if (rs === 'approved')  return 'Return Approved';
+        if (rs === 'rejected')  return 'Return Rejected';
+        return 'Return Pending Review';
+    }
+    function statusSubtext(rs, rf) {
+        if (rf === 'completed') return 'Your refund has been successfully processed.';
+        if (rs === 'approved')  return 'Please ship the device back. Refund will follow.';
+        if (rs === 'rejected')  return 'Your return request was not approved.';
+        return 'Our team will review your request within 24-48 hours.';
+    }
+
+    function pillClass(s) { const m={pending:'bp-pending',approved:'bp-approved',rejected:'bp-rejected',completed:'bp-completed'}; return m[s]||'bp-pending'; }
+
+    async function loadStatus() {
+        if (!orderId) {
+            document.getElementById('loadingScreen').innerHTML = `
+                <div style="font-size:3rem; margin-bottom:16px;">❓</div>
+                <h3 style="color:var(--text); margin-bottom:8px;">No Order ID</h3>
+                <p>Please go back to My Orders and select an order.</p>
+                <a href="orders.html" class="link-btn" style="margin-top:20px; display:inline-block;">← My Orders</a>`;
+            return;
+        }
+
+        try {
+            const res  = await fetch(getApiUrl(API_CONFIG.ENDPOINTS.RETURNS + '/order/' + encodeURIComponent(orderId)));
+            const data = await res.json();
+
+            document.getElementById('loadingScreen').style.display = 'none';
+            const mc = document.getElementById('mainContent');
+            mc.style.display = 'block';
+
+            if (!res.ok || !data.success) {
+                // No return yet — show order info
+                const orderRes  = await fetch(getApiUrl(API_CONFIG.ENDPOINTS.ORDERS + '/' + encodeURIComponent(orderId)));
+                const orderData = await orderRes.json();
+                const order     = orderData.order;
+
+                mc.innerHTML = `
+                <div class="info-card">
+                    <div class="no-return">
+                        <div class="icon">📦</div>
+                        <h2>No Return Request Found</h2>
+                        <p>There is no return request associated with this order yet.</p>
+                        ${order ? `<p style="margin-bottom:20px; color:var(--text)">Order: <strong>${order.mobile?.brand} ${order.mobile?.model}</strong></p>` : ''}
+                        <a href="orders.html" class="link-btn">← My Orders</a>
+                        <a href="return-request.html?orderId=${encodeURIComponent(orderId)}" class="link-btn red">↩️ Request Return</a>
+                    </div>
+                </div>`;
+                return;
+            }
+
+            const ret = data.return;
+            const rs  = ret.return_status;
+            const rf  = ret.refund_status;
+
+            let html = '';
+
+            // ── Status Hero ──
+            html += `
+            <div class="status-hero ${statusHeroClass(rs, rf)}">
+                <div class="status-icon-wrap">${statusIcon(rs, rf)}</div>
+                <div class="status-label">${statusHeading(rs, rf)}</div>
+                <div class="status-sub">${statusSubtext(rs, rf)}</div>
+            </div>`;
+
+            // ── Refund Box (when completed) ──
+            if (rf === 'completed') {
+                html += `
+                <div class="refund-box">
+                    <h3>💳 Refund Details</h3>
+                    <div class="refund-amount">${rupee(ret.refund_amount)}</div>
+                    <div class="refund-sub">Refund processed on ${fmtDate(ret.refund_date)}</div>
+                </div>`;
+            }
+
+            // ── Timeline ──
+            html += `
+            <div class="info-card">
+                <h3>📍 Return Journey</h3>
+                ${buildTimeline(ret)}
+            </div>`;
+
+            // ── Order Info ──
+            html += `
+            <div class="info-card">
+                <h3>📦 Order Information</h3>
+                <div class="info-row"><span class="lbl">Product</span><span class="val">${ret.mobile_brand} ${ret.mobile_model}</span></div>
+                <div class="info-row"><span class="lbl">Order ID</span><span class="val" style="font-size:0.78rem">${ret.order_id}</span></div>
+                <div class="info-row"><span class="lbl">Purchase Date</span><span class="val">${fmtDate(ret.purchase_date)}</span></div>
+                <div class="info-row"><span class="lbl">Amount Paid</span><span class="val price">${rupee(ret.total_amount)}</span></div>
+                <div class="info-row"><span class="lbl">Customer</span><span class="val">${ret.customer_name}</span></div>
+                <div class="info-row"><span class="lbl">Email</span><span class="val">${ret.customer_email}</span></div>
+            </div>`;
+
+            // ── Return Request Info ──
+            html += `
+            <div class="info-card">
+                <h3>↩️ Return Request Details</h3>
+                <div class="info-row"><span class="lbl">Return ID</span><span class="val" style="font-size:0.78rem">${ret.return_id}</span></div>
+                <div class="info-row"><span class="lbl">Return Reason</span><span class="val">${ret.reason}</span></div>
+                <div class="info-row"><span class="lbl">Submitted On</span><span class="val">${fmt(ret.request_date)}</span></div>
+                <div class="info-row">
+                    <span class="lbl">Return Status</span>
+                    <span class="val"><span class="badge-pill ${pillClass(rs)}">${rs.replace('_',' ').toUpperCase()}</span></span>
+                </div>
+                <div class="info-row">
+                    <span class="lbl">Refund Status</span>
+                    <span class="val"><span class="badge-pill ${pillClass(rf)}">${rf.replace('_',' ').toUpperCase()}</span></span>
+                </div>
+                ${rf === 'completed' ? `<div class="info-row"><span class="lbl">Refund Amount</span><span class="val price">${rupee(ret.refund_amount)}</span></div>` : ''}
+                ${rf === 'completed' ? `<div class="info-row"><span class="lbl">Refund Date</span><span class="val green">${fmt(ret.refund_date)}</span></div>` : ''}
+                ${ret.admin_notes ? `<div class="info-row" style="flex-direction:column; align-items:flex-start; gap:6px;"><span class="lbl">Admin Notes</span><div class="admin-notes">"${ret.admin_notes}"</div></div>` : ''}
+            </div>`;
+
+            html += `<div style="text-align:center; margin-top:8px;">
+                <a href="orders.html" class="link-btn">← Back to My Orders</a>
+            </div>`;
+
+            mc.innerHTML = html;
+
+        } catch(e) {
+            document.getElementById('loadingScreen').innerHTML = `
+                <div style="font-size:3rem; margin-bottom:16px;">🔌</div>
+                <h3 style="color:var(--text); margin-bottom:8px;">Server Unreachable</h3>
+                <p>Could not connect to the backend. Please ensure the server is running on port 4000.</p>`;
+        }
+    }
+
+    loadStatus();
+</script>
+</body>
+</html>

@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Return Mobile - MobileHub</title>
+    <meta name="description" content="Submit a return request for your MobileHub purchase.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #667eea;
+            --primary-dark: #764ba2;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg: #0f0f1a;
+            --card: #1a1a2e;
+            --card2: #16213e;
+            --border: rgba(102,126,234,0.18);
+            --text: #e2e8f0;
+            --muted: #94a3b8;
+        }
+
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+        nav {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            padding: 0 24px; height: 64px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 100;
+            box-shadow: 0 4px 30px rgba(102,126,234,0.35);
+        }
+        .nav-brand { font-size: 1.4rem; font-weight: 800; }
+        .nav-links a { color: rgba(255,255,255,0.85); text-decoration: none; margin-left: 20px; font-size: 0.9rem; font-weight: 500; }
+
+        .container { max-width: 640px; margin: 0 auto; padding: 36px 20px; }
+
+        /* Steps */
+        .steps {
+            display: flex; justify-content: center; gap: 0; margin-bottom: 36px;
+        }
+        .step {
+            display: flex; flex-direction: column; align-items: center; flex: 1; max-width: 160px;
+            position: relative;
+        }
+        .step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 18px; left: calc(50% + 18px);
+            width: calc(100% - 36px); height: 2px;
+            background: var(--border);
+            transition: background 0.4s;
+        }
+        .step.done:not(:last-child)::after { background: var(--success); }
+        .step-circle {
+            width: 36px; height: 36px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.85rem;
+            background: var(--card2); border: 2px solid var(--border);
+            transition: all 0.3s; margin-bottom: 6px;
+        }
+        .step.active .step-circle { border-color: var(--primary); color: var(--primary); background: rgba(102,126,234,0.12); }
+        .step.done   .step-circle { border-color: var(--success); color: #fff; background: var(--success); }
+        .step-label { font-size: 0.72rem; color: var(--muted); font-weight: 600; text-align: center; }
+        .step.active .step-label { color: var(--primary); }
+        .step.done   .step-label { color: var(--success); }
+
+        /* Cards */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 28px;
+            margin-bottom: 22px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+        }
+        .card h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 18px; }
+        .card h2 span { font-size: 1.3rem; margin-right: 8px; }
+
+        .order-info-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 18px;
+        }
+        @media(max-width:500px) { .order-info-grid { grid-template-columns: 1fr; } }
+
+        .info-item { background: var(--card2); border-radius: 10px; padding: 12px; }
+        .info-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em; margin-bottom: 3px; }
+        .info-value { font-size: 0.95rem; font-weight: 600; }
+        .info-value.price { color: var(--success); }
+
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            background: var(--card2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 14px;
+            color: var(--text);
+            font-size: 0.95rem;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-group select option { background: #1a1a2e; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.15);
+        }
+        .form-group input.err, .form-group select.err { border-color: var(--danger); }
+
+        .reason-options { display: flex; flex-direction: column; gap: 10px; }
+        .reason-option {
+            display: flex; align-items: center; gap: 12px;
+            background: var(--card2); border: 1px solid var(--border);
+            border-radius: 10px; padding: 12px 16px;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .reason-option:hover { border-color: var(--primary); background: rgba(102,126,234,0.08); }
+        .reason-option input[type="radio"] { accent-color: var(--primary); width: 18px; height: 18px; }
+        .reason-option.selected { border-color: var(--primary); background: rgba(102,126,234,0.12); }
+        .reason-text { font-size: 0.9rem; font-weight: 500; }
+        .reason-icon { font-size: 1.2rem; }
+
+        .submit-btn {
+            width: 100%; padding: 14px;
+            background: linear-gradient(135deg, var(--danger), #dc2626);
+            color: #fff; border: none; border-radius: 10px;
+            font-size: 1rem; font-weight: 700; font-family: 'Inter', sans-serif;
+            cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .submit-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+        .verify-btn {
+            width: 100%; padding: 13px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: #fff; border: none; border-radius: 10px;
+            font-size: 1rem; font-weight: 700; font-family: 'Inter', sans-serif;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .verify-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+        .verify-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+        .alert {
+            padding: 12px 16px; border-radius: 10px;
+            font-size: 0.88rem; margin-top: 14px; display: none;
+        }
+        .alert.error   { background: rgba(239,68,68,0.12);  border: 1px solid rgba(239,68,68,0.3);  color: #fca5a5; }
+        .alert.success { background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3); color: #6ee7b7; }
+        .alert.warning { background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3); color: #fcd34d; }
+
+        .spinner { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Success state */
+        .success-state {
+            text-align: center; padding: 40px 20px; display: none;
+        }
+        .success-icon { font-size: 4rem; margin-bottom: 16px; animation: bounceIn 0.5s ease; }
+        .success-state h2 { font-size: 1.5rem; font-weight: 800; margin-bottom: 10px; }
+        .success-state p  { color: var(--muted); margin-bottom: 24px; }
+        @keyframes bounceIn {
+            0%   { transform: scale(0); }
+            60%  { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+
+        .link-btn {
+            display: inline-block; padding: 11px 24px; border-radius: 10px;
+            font-weight: 700; font-size: 0.9rem; text-decoration: none;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: #fff; transition: all 0.2s;
+        }
+        .link-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+
+        .back-link { display: flex; align-items: center; gap: 6px; color: var(--muted); text-decoration: none; font-size: 0.88rem; font-weight: 600; margin-bottom: 24px; transition: color 0.2s; }
+        .back-link:hover { color: var(--primary); }
+
+        .loading-screen {
+            text-align: center; padding: 60px 20px; color: var(--muted);
+        }
+        .loading-screen .big-spinner {
+            width: 48px; height: 48px;
+            border: 4px solid rgba(102,126,234,0.2);
+            border-top-color: var(--primary);
+            border-radius: 50%; animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        .warning-banner {
+            background: rgba(245,158,11,0.1);
+            border: 1px solid rgba(245,158,11,0.3);
+            border-radius: 12px; padding: 14px 16px;
+            margin-bottom: 18px;
+            display: flex; gap: 10px; align-items: flex-start;
+            font-size: 0.88rem; color: #fcd34d;
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="nav-brand">📱 MobileHub</div>
+    <div class="nav-links">
+        <a href="orders.html">📦 My Orders</a>
+        <a href="index.html">🏠 Home</a>
+    </div>
+</nav>
+
+<div class="container">
+
+    <a href="orders.html" class="back-link">← Back to My Orders</a>
+
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="big-spinner"></div>
+        <p>Checking return eligibility…</p>
+    </div>
+
+    <!-- Main Content (hidden until loaded) -->
+    <div id="mainContent" style="display:none">
+
+        <!-- Step Indicators -->
+        <div class="steps">
+            <div class="step active" id="step1el">
+                <div class="step-circle">1</div>
+                <div class="step-label">Verify Identity</div>
+            </div>
+            <div class="step" id="step2el">
+                <div class="step-circle">2</div>
+                <div class="step-label">Select Reason</div>
+            </div>
+            <div class="step" id="step3el">
+                <div class="step-circle">3</div>
+                <div class="step-label">Confirmed</div>
+            </div>
+        </div>
+
+        <!-- Order Info Banner -->
+        <div class="card" id="orderInfoCard">
+            <h2><span>📦</span>Order Details</h2>
+            <div class="order-info-grid" id="orderInfoGrid"></div>
+            <div class="warning-banner">
+                ⚠️ <span>Return window: <strong id="daysRemainingText"></strong>. You can only submit one return request per order.</span>
+            </div>
+        </div>
+
+        <!-- STEP 1: Identity Verification -->
+        <div class="card" id="step1Card">
+            <h2><span>🔐</span>Step 1 — Verify Your Identity</h2>
+            <p style="color:var(--muted); font-size:0.88rem; margin-bottom:18px;">
+                For your security, please confirm the name and email used during purchase.
+            </p>
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" id="verifyName" placeholder="Enter your name" autocomplete="name">
+            </div>
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="verifyEmail" placeholder="Enter your email" autocomplete="email">
+            </div>
+            <button class="verify-btn" id="verifyBtn" onclick="verifyIdentity()">🔐 Verify Identity</button>
+            <div class="alert error"   id="verifyError"></div>
+            <div class="alert success" id="verifySuccess"></div>
+        </div>
+
+        <!-- STEP 2: Return Reason (hidden initially) -->
+        <div class="card" id="step2Card" style="display:none">
+            <h2><span>📋</span>Step 2 — Select Return Reason</h2>
+            <div class="reason-options" id="reasonOptions">
+                <label class="reason-option" onclick="selectReason(this, 'Product not satisfied')">
+                    <input type="radio" name="reason" value="Product not satisfied">
+                    <span class="reason-icon">😞</span>
+                    <span class="reason-text">Product not satisfied</span>
+                </label>
+                <label class="reason-option" onclick="selectReason(this, 'Hardware issue')">
+                    <input type="radio" name="reason" value="Hardware issue">
+                    <span class="reason-icon">🔧</span>
+                    <span class="reason-text">Hardware issue</span>
+                </label>
+                <label class="reason-option" onclick="selectReason(this, 'Software issue')">
+                    <input type="radio" name="reason" value="Software issue">
+                    <span class="reason-icon">💾</span>
+                    <span class="reason-text">Software issue</span>
+                </label>
+                <label class="reason-option" onclick="selectReason(this, 'Wrong product received')">
+                    <input type="radio" name="reason" value="Wrong product received">
+                    <span class="reason-icon">📦</span>
+                    <span class="reason-text">Wrong product received</span>
+                </label>
+                <label class="reason-option" onclick="selectReason(this, 'Other reasons')">
+                    <input type="radio" name="reason" value="Other reasons">
+                    <span class="reason-icon">💬</span>
+                    <span class="reason-text">Other reasons</span>
+                </label>
+            </div>
+            <div class="alert warning" id="reasonError" style="margin-top:14px;display:none;">⚠️ Please select a return reason.</div>
+            <button class="submit-btn" id="submitBtn" onclick="submitReturn()" style="margin-top:20px;">
+                ↩️ Submit Return Request
+            </button>
+            <div class="alert error"   id="submitError" style="margin-top:14px;"></div>
+        </div>
+
+        <!-- STEP 3: Success State -->
+        <div class="card" id="step3Card" style="display:none">
+            <div class="success-state" id="successState" style="display:block">
+                <div class="success-icon">✅</div>
+                <h2>Return Request Submitted!</h2>
+                <p>Your return request has been received. Our team will review it and get back to you shortly.</p>
+                <div style="background:var(--card2); border-radius:12px; padding:18px; margin:20px 0; text-align:left;">
+                    <div style="font-size:0.75rem; color:var(--muted); text-transform:uppercase; font-weight:600; margin-bottom:8px;">Return Details</div>
+                    <div id="returnConfirmDetails"></div>
+                </div>
+                <div style="display:flex; gap:12px; justify-content:center; flex-wrap:wrap;">
+                    <a href="orders.html" class="link-btn">📦 My Orders</a>
+                    <a href="refund-status.html" class="link-btn" id="refundStatusLink" style="background:linear-gradient(135deg,#10b981,#059669);">📊 Track Refund</a>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /mainContent -->
+
+    <!-- Error screen for ineligible orders -->
+    <div id="errorScreen" style="display:none">
+        <div class="card" style="text-align:center; padding:40px 24px;">
+            <div style="font-size:3rem; margin-bottom:16px;" id="errorIcon">❌</div>
+            <h2 style="margin-bottom:10px;" id="errorTitle">Cannot Process Return</h2>
+            <p style="color:var(--muted); margin-bottom:24px;" id="errorMessage"></p>
+            <a href="orders.html" class="link-btn">← Back to My Orders</a>
+        </div>
+    </div>
+
+</div>
+
+<script src="config.js"></script>
+<script>
+    const params  = new URLSearchParams(window.location.search);
+    const orderId = params.get('orderId');
+    let verifiedName  = '';
+    let verifiedEmail = '';
+    let selectedReason = '';
+    let currentStep = 1;
+
+    function setStep(n) {
+        currentStep = n;
+        [1,2,3].forEach(s => {
+            const el = document.getElementById(`step${s}el`);
+            el.className = 'step' + (s < n ? ' done' : s === n ? ' active' : '');
+        });
+        ['step1Card','step2Card','step3Card'].forEach((id, i) => {
+            document.getElementById(id).style.display = (i + 1 === n) ? 'block' : 'none';
+        });
+    }
+
+    function showError(icon, title, msg) {
+        document.getElementById('loadingScreen').style.display = 'none';
+        document.getElementById('errorIcon').textContent    = icon;
+        document.getElementById('errorTitle').textContent   = title;
+        document.getElementById('errorMessage').textContent = msg;
+        document.getElementById('errorScreen').style.display = 'block';
+    }
+
+    function showAlert(id, msg, type) {
+        const el = document.getElementById(id);
+        el.textContent    = msg;
+        el.style.display  = 'block';
+        el.className      = `alert ${type}`;
+    }
+
+    function selectReason(el, value) {
+        selectedReason = value;
+        document.querySelectorAll('.reason-option').forEach(r => r.classList.remove('selected'));
+        el.classList.add('selected');
+        document.getElementById('reasonError').style.display = 'none';
+    }
+
+    function formatDate(d) {
+        return new Date(d).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+    }
+
+    // ── Load & check eligibility on page load ──
+    async function init() {
+        if (!orderId) { showError('❓','Missing Order ID','No order ID provided. Please go back to My Orders.'); return; }
+
+        try {
+            const res  = await fetch(getApiUrl(API_CONFIG.ENDPOINTS.RETURNS_ELIGIBILITY), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId })
+            });
+            const data = await res.json();
+
+            document.getElementById('loadingScreen').style.display = 'none';
+
+            if (!data.success) { showError('❌','Error','Could not load order details.'); return; }
+
+            const { eligible, reasons, order, existingReturn } = data;
+
+            // Fill order info
+            document.getElementById('orderInfoGrid').innerHTML = `
+                <div class="info-item"><div class="info-label">Product</div><div class="info-value">${order.product}</div></div>
+                <div class="info-item"><div class="info-label">Order ID</div><div class="info-value" style="font-size:0.78rem">${order.orderId}</div></div>
+                <div class="info-item"><div class="info-label">Purchase Date</div><div class="info-value">${formatDate(order.purchaseDate)}</div></div>
+                <div class="info-item"><div class="info-label">Amount Paid</div><div class="info-value price">₹${parseFloat(order.totalAmount).toLocaleString('en-IN')}</div></div>
+            `;
+            document.getElementById('daysRemainingText').textContent =
+                reasons.daysRemaining > 0
+                    ? `${reasons.daysRemaining} day(s) remaining`
+                    : 'Period has expired';
+
+            // Eligibility blocks
+            if (existingReturn) {
+                showError('↩️','Return Already Submitted',`A return request for this order already exists. Status: ${existingReturn.return_status}.`);
+                return;
+            }
+            if (!reasons.isDelivered) {
+                showError('🚚','Order Not Delivered','Your order must be delivered before you can request a return.');
+                return;
+            }
+            if (!reasons.withinWindow) {
+                showError('⛔','Return Period Expired',`The 15-day return window has passed (${reasons.daysElapsed} days since purchase). Returns are not accepted after 15 days.`);
+                return;
+            }
+
+            // All good — show main content
+            document.getElementById('mainContent').style.display = 'block';
+            setStep(1);
+
+        } catch(e) {
+            showError('🔌','Server Unreachable','Could not connect to the backend. Please ensure the server is running.');
+        }
+    }
+
+    // ── Step 1: Verify Identity ──
+    async function verifyIdentity() {
+        const name  = document.getElementById('verifyName').value.trim();
+        const email = document.getElementById('verifyEmail').value.trim();
+
+        document.getElementById('verifyError').style.display   = 'none';
+        document.getElementById('verifySuccess').style.display = 'none';
+
+        if (!name)  return showAlert('verifyError','⚠️ Please enter your name.','error');
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+            return showAlert('verifyError','⚠️ Please enter a valid email.','error');
+
+        const btn = document.getElementById('verifyBtn');
+        btn.disabled = true; btn.textContent = 'Verifying…';
+
+        try {
+            const res  = await fetch(getApiUrl(API_CONFIG.ENDPOINTS.RETURNS_VERIFY), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId, name, email })
+            });
+            const data = await res.json();
+
+            if (!res.ok || !data.verified) {
+                showAlert('verifyError','❌ ' + (data.message || 'Name or email does not match our records.'), 'error');
+            } else {
+                verifiedName  = name;
+                verifiedEmail = email;
+                showAlert('verifySuccess','✅ Identity verified! Please select your return reason.','success');
+                setTimeout(() => {
+                    setStep(2);
+                    document.getElementById('orderInfoCard').scrollIntoView({ behavior:'smooth' });
+                }, 800);
+            }
+        } catch(e) {
+            showAlert('verifyError','❌ Server error. Please try again.','error');
+        } finally {
+            btn.disabled = false; btn.textContent = '🔐 Verify Identity';
+        }
+    }
+
+    // ── Step 2: Submit Return ──
+    async function submitReturn() {
+        if (!selectedReason) {
+            document.getElementById('reasonError').style.display = 'block';
+            return;
+        }
+        document.getElementById('submitError').style.display = 'none';
+
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<div class="spinner"></div> Submitting…';
+
+        try {
+            const res  = await fetch(getApiUrl(API_CONFIG.ENDPOINTS.RETURNS_REQUEST), {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId, name: verifiedName, email: verifiedEmail, reason: selectedReason })
+            });
+            const data = await res.json();
+
+            if (!res.ok || !data.success) {
+                showAlert('submitError', '❌ ' + (data.message || 'Failed to submit return.'), 'error');
+                btn.disabled = false; btn.innerHTML = '↩️ Submit Return Request';
+            } else {
+                // Show confirmation
+                const ret = data.return;
+                document.getElementById('returnConfirmDetails').innerHTML = `
+                    <div style="display:grid; gap:8px;">
+                        <div style="display:flex; justify-content:space-between; font-size:0.88rem;">
+                            <span style="color:var(--muted)">Return ID</span>
+                            <span style="font-weight:600">${ret.returnId}</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; font-size:0.88rem;">
+                            <span style="color:var(--muted)">Reason</span>
+                            <span style="font-weight:600">${ret.reason}</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; font-size:0.88rem;">
+                            <span style="color:var(--muted)">Status</span>
+                            <span style="font-weight:600; color:#fcd34d">⏳ Pending Review</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; font-size:0.88rem;">
+                            <span style="color:var(--muted)">Submitted</span>
+                            <span style="font-weight:600">${new Date(ret.requestDate).toLocaleString('en-IN')}</span>
+                        </div>
+                    </div>`;
+                document.getElementById('refundStatusLink').href = `refund-status.html?orderId=${encodeURIComponent(orderId)}`;
+                setStep(3);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        } catch(e) {
+            showAlert('submitError','❌ Server error. Please try again.','error');
+            btn.disabled = false; btn.innerHTML = '↩️ Submit Return Request';
+        }
+    }
+
+    init();
+</script>
+</body>
+</html>

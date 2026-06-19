@@ -32,8 +32,9 @@ class Order {
                 mobile_model,
                 mobile_price,
                 total_amount,
-                status
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                status,
+                delivery_status
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
             RETURNING *
         `;
 
@@ -47,7 +48,8 @@ class Order {
             mobile?.model || null,
             mobile?.price || null,
             totalAmount,
-            'completed'
+            'completed',
+            'delivered'   // default: simulates same-day delivery for demo
         ];
 
         const result = await query(insertQuery, values);
@@ -87,11 +89,11 @@ class Order {
     }
 
     /**
-     * Get orders by customer email
+     * Get orders by customer email (legacy — kept for orders route)
      * @param {string} email - Customer email
      * @returns {Promise<Array>} Array of orders
      */
-    static async findByEmail(email) {
+    static async findByEmailLegacy(email) {
         const selectQuery = `
             SELECT * FROM orders
             WHERE customer_email = $1
@@ -104,6 +106,8 @@ class Order {
 
     /**
      * Update order status
+     * Supported statuses: completed | return_requested | return_approved |
+     *                      return_rejected | refund_completed
      * @param {string} orderId - Order ID
      * @param {string} status - New status
      * @returns {Promise<Object>} Updated order
@@ -118,6 +122,38 @@ class Order {
         
         const result = await query(updateQuery, [status, orderId]);
         return result.rows[0];
+    }
+
+    /**
+     * Update delivery status of an order
+     * @param {string} orderId
+     * @param {string} deliveryStatus  'pending' | 'shipped' | 'delivered'
+     * @returns {Promise<Object>} Updated order
+     */
+    static async updateDeliveryStatus(orderId, deliveryStatus) {
+        const result = await query(
+            `UPDATE orders
+             SET delivery_status = $1, updated_at = CURRENT_TIMESTAMP
+             WHERE order_id = $2
+             RETURNING *`,
+            [deliveryStatus, orderId]
+        );
+        return result.rows[0];
+    }
+
+    /**
+     * Find orders by customer email (case-insensitive)
+     * @param {string} email
+     * @returns {Promise<Array>}
+     */
+    static async findByEmail(email) {
+        const result = await query(
+            `SELECT * FROM orders
+             WHERE LOWER(customer_email) = LOWER($1)
+             ORDER BY created_at DESC`,
+            [email]
+        );
+        return result.rows;
     }
 }
 

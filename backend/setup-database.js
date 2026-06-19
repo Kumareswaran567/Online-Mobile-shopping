@@ -48,12 +48,44 @@ async function setupDatabase() {
                 mobile_model VARCHAR(100),
                 mobile_price DECIMAL(10, 2),
                 total_amount DECIMAL(10, 2) NOT NULL,
-                status VARCHAR(50) DEFAULT 'pending',
+                status VARCHAR(50) DEFAULT 'completed',
+                delivery_status VARCHAR(50) DEFAULT 'delivered',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         `);
         console.log('✅ Orders table created');
+
+        // Add delivery_status column if it doesn't exist (migration for existing tables)
+        await query(`
+            DO $$ BEGIN
+                IF NOT EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name = 'orders' AND column_name = 'delivery_status'
+                ) THEN
+                    ALTER TABLE orders ADD COLUMN delivery_status VARCHAR(50) DEFAULT 'delivered';
+                END IF;
+            END $$;
+        `);
+        console.log('✅ delivery_status column ensured');
+
+        // Create returns table
+        await query(`
+            CREATE TABLE IF NOT EXISTS returns (
+                id SERIAL PRIMARY KEY,
+                return_id VARCHAR(60) UNIQUE NOT NULL,
+                order_id VARCHAR(50) NOT NULL REFERENCES orders(order_id) ON DELETE CASCADE,
+                reason VARCHAR(255) NOT NULL,
+                admin_notes TEXT DEFAULT '',
+                return_status VARCHAR(50) DEFAULT 'pending',
+                refund_status VARCHAR(50) DEFAULT 'pending',
+                refund_amount DECIMAL(10,2) DEFAULT 0,
+                refund_date TIMESTAMP,
+                request_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        console.log('✅ Returns table created');
 
         // Create index on order_id for faster lookups (only if column exists)
         await query(`
@@ -72,6 +104,12 @@ async function setupDatabase() {
             CREATE INDEX IF NOT EXISTS idx_created_at ON orders(created_at DESC)
         `);
         console.log('✅ Index created on created_at');
+
+        // Returns table indexes
+        await query(`CREATE INDEX IF NOT EXISTS idx_returns_order_id ON returns(order_id)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_returns_status ON returns(return_status)`);
+        await query(`CREATE INDEX IF NOT EXISTS idx_returns_request_date ON returns(request_date DESC)`);
+        console.log('✅ Returns indexes created');
 
         console.log('🎉 Database setup completed successfully!');
         

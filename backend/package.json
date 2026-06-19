@@ -1,32 +1,23 @@
 {
-  "name": "mobilehub-backend",
+  "name": "mobile",
   "version": "1.0.0",
-  "description": "Backend API for MobileHub e-commerce",
-  "main": "server.js",
+  "description": "",
+  "main": "api.js",
   "scripts": {
-    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "FOR /F \"tokens=5\" %a IN ('netstat -ano ^| findstr :4000') DO taskkill /PID %a /F & nodemon server.js",
-    "setup-db": "node setup-database.js",
-    "fix-db": "node fix-database.js",
-    "test-db": "node test-database.js",
-    "connect": "node connect-and-start.js",
-    "setup": "node setup-database.js && node server.js"
+    "start": "node server.js"
   },
-  "keywords": [
-    "express",
-    "postgresql",
-    "api"
-  ],
+  "keywords": [],
   "author": "",
   "license": "ISC",
+  "type": "commonjs",
   "dependencies": {
+    "body-parser": "^2.2.2",
     "cors": "^2.8.6",
-    "dotenv": "^16.6.1",
-    "express": "^4.18.2",
-    "kill-port": "^2.0.1",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "nodemon": "^3.1.14",
     "pg": "^8.18.0"
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.1"
   }
 }

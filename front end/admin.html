@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin — Return Management · MobileHub</title>
+    <meta name="description" content="Admin dashboard for managing mobile return requests and refunds.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #667eea; --primary-dark: #764ba2;
+            --success: #10b981; --warning: #f59e0b;
+            --danger: #ef4444; --teal: #06b6d4;
+            --bg: #0a0a14; --card: #13132a; --card2: #0f0f20;
+            --border: rgba(102,126,234,0.15); --text: #e2e8f0; --muted: #64748b;
+        }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+        /* ── Sidebar ── */
+        .layout { display: flex; min-height: 100vh; }
+        .sidebar {
+            width: 240px; background: var(--card);
+            border-right: 1px solid var(--border);
+            display: flex; flex-direction: column;
+            position: fixed; top: 0; left: 0; height: 100vh; z-index: 200;
+            transition: transform 0.3s;
+        }
+        .sidebar-brand {
+            padding: 24px 20px;
+            border-bottom: 1px solid var(--border);
+            font-size: 1.2rem; font-weight: 800;
+        }
+        .sidebar-brand span { color: var(--primary); }
+        .sidebar-badge {
+            display: inline-block; background: rgba(239,68,68,0.2);
+            color: #fca5a5; font-size: 0.65rem; font-weight: 700;
+            padding: 2px 7px; border-radius: 20px; margin-left: 6px; vertical-align: middle;
+        }
+        .nav-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 12px 20px; color: var(--muted); font-weight: 600; font-size: 0.88rem;
+            cursor: pointer; transition: all 0.2s; border: none; background: none;
+            width: 100%; text-align: left;
+            border-left: 3px solid transparent;
+        }
+        .nav-item:hover { color: var(--text); background: rgba(102,126,234,0.08); }
+        .nav-item.active { color: var(--primary); border-left-color: var(--primary); background: rgba(102,126,234,0.1); }
+        .nav-item .icon { font-size: 1.1rem; }
+        .nav-section { padding: 16px 20px 6px; font-size: 0.68rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
+
+        .sidebar-footer {
+            margin-top: auto; padding: 16px 20px;
+            border-top: 1px solid var(--border);
+            font-size: 0.75rem; color: var(--muted);
+        }
+
+        /* ── Main ── */
+        .main { margin-left: 240px; flex: 1; padding: 28px; }
+        @media(max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .main { margin-left: 0; padding: 16px; }
+            .menu-toggle { display: flex; }
+        }
+
+        /* ── Topbar ── */
+        .topbar {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 28px; flex-wrap: wrap; gap: 12px;
+        }
+        .topbar h1 { font-size: 1.5rem; font-weight: 800; }
+        .topbar-right { display: flex; align-items: center; gap: 12px; }
+        .menu-toggle {
+            display: none; background: none; border: none; color: var(--text);
+            font-size: 1.4rem; cursor: pointer; padding: 4px;
+        }
+        .refresh-btn {
+            padding: 8px 16px; background: rgba(102,126,234,0.12);
+            border: 1px solid rgba(102,126,234,0.3); border-radius: 8px;
+            color: var(--primary); font-weight: 700; font-size: 0.82rem;
+            font-family: 'Inter', sans-serif; cursor: pointer; transition: all 0.2s;
+        }
+        .refresh-btn:hover { background: rgba(102,126,234,0.22); }
+
+        /* ── Stats Grid ── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px; margin-bottom: 28px;
+        }
+        .stat-card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 16px; padding: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.25); }
+        .stat-icon { font-size: 1.8rem; margin-bottom: 10px; }
+        .stat-num  { font-size: 1.8rem; font-weight: 800; line-height: 1; }
+        .stat-lbl  { font-size: 0.75rem; color: var(--muted); margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+        .stat-card.total   .stat-num { color: var(--primary); }
+        .stat-card.pending .stat-num { color: var(--warning); }
+        .stat-card.approved .stat-num { color: var(--success); }
+        .stat-card.rejected .stat-num { color: var(--danger); }
+        .stat-card.refund  .stat-num { color: var(--teal); }
+
+        /* ── Filter Bar ── */
+        .filter-bar {
+            display: flex; gap: 10px; flex-wrap: wrap;
+            margin-bottom: 20px; align-items: center;
+        }
+        .filter-btn {
+            padding: 7px 16px; border-radius: 20px; font-size: 0.8rem; font-weight: 700;
+            border: 1px solid var(--border); background: var(--card); color: var(--muted);
+            cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s;
+        }
+        .filter-btn.active { border-color: var(--primary); color: var(--primary); background: rgba(102,126,234,0.1); }
+        .filter-btn:hover  { border-color: var(--primary); color: var(--primary); }
+
+        .search-input {
+            flex: 1; min-width: 200px; max-width: 300px;
+            padding: 8px 14px;
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 20px; color: var(--text); font-size: 0.85rem;
+            font-family: 'Inter', sans-serif; outline: none; transition: border-color 0.2s;
+        }
+        .search-input::placeholder { color: var(--muted); }
+        .search-input:focus { border-color: var(--primary); }
+
+        /* ── Table / Cards ── */
+        .returns-grid { display: flex; flex-direction: column; gap: 14px; }
+
+        .return-card {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 16px; padding: 20px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            animation: slideIn 0.35s ease both;
+        }
+        .return-card:hover { border-color: rgba(102,126,234,0.35); box-shadow: 0 6px 30px rgba(0,0,0,0.2); }
+        @keyframes slideIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+        .rc-header {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            margin-bottom: 14px; flex-wrap: wrap; gap: 10px;
+        }
+        .rc-ids { }
+        .rc-return-id { font-size: 0.72rem; color: var(--muted); font-weight: 600; letter-spacing: 0.05em; }
+        .rc-customer   { font-size: 1rem; font-weight: 700; margin-top: 2px; }
+        .rc-email      { font-size: 0.8rem; color: var(--muted); }
+
+        .badges { display: flex; gap: 6px; flex-wrap: wrap; }
+        .badge {
+            padding: 3px 10px; border-radius: 20px;
+            font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+        }
+        .b-pending   { background: rgba(245,158,11,0.15);  color: #fcd34d; }
+        .b-approved  { background: rgba(16,185,129,0.15);  color: #6ee7b7; }
+        .b-rejected  { background: rgba(239,68,68,0.15);   color: #fca5a5; }
+        .b-completed { background: rgba(6,182,212,0.15);   color: #67e8f9; }
+
+        .rc-meta {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(130px,1fr));
+            gap: 10px; margin-bottom: 16px;
+        }
+        .meta-item .lbl { font-size: 0.68rem; color: var(--muted); text-transform: uppercase; font-weight: 600; letter-spacing: 0.05em; margin-bottom: 2px; }
+        .meta-item .val { font-size: 0.88rem; font-weight: 600; }
+        .meta-item .val.price { color: var(--success); }
+
+        .rc-footer {
+            display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end;
+            padding-top: 14px; border-top: 1px solid var(--border);
+        }
+
+        .action-btn {
+            padding: 7px 16px; border-radius: 8px; font-size: 0.8rem;
+            font-weight: 700; border: none; cursor: pointer;
+            font-family: 'Inter', sans-serif; transition: all 0.2s;
+            display: inline-flex; align-items: center; gap: 5px;
+        }
+        .btn-approve { background: rgba(16,185,129,0.12); color: var(--success); border: 1px solid rgba(16,185,129,0.3); }
+        .btn-approve:hover { background: rgba(16,185,129,0.25); transform: translateY(-1px); }
+        .btn-reject  { background: rgba(239,68,68,0.1);  color: var(--danger);  border: 1px solid rgba(239,68,68,0.3); }
+        .btn-reject:hover  { background: rgba(239,68,68,0.22); transform: translateY(-1px); }
+        .btn-refund  { background: rgba(6,182,212,0.1);  color: var(--teal);    border: 1px solid rgba(6,182,212,0.3); }
+        .btn-refund:hover  { background: rgba(6,182,212,0.22); transform: translateY(-1px); }
+        .btn-view    { background: rgba(102,126,234,0.1); color: var(--primary); border: 1px solid rgba(102,126,234,0.3); }
+        .btn-view:hover    { background: rgba(102,126,234,0.22); transform: translateY(-1px); }
+        .action-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+        /* ── Modal ── */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(6px); z-index: 500;
+            display: flex; align-items: center; justify-content: center;
+            padding: 20px; opacity: 0; visibility: hidden; transition: all 0.25s;
+        }
+        .modal-overlay.open { opacity: 1; visibility: visible; }
+        .modal {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 20px; padding: 28px; max-width: 500px; width: 100%;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+            transform: scale(0.93); transition: transform 0.25s;
+        }
+        .modal-overlay.open .modal { transform: scale(1); }
+        .modal h3 { font-size: 1.1rem; font-weight: 800; margin-bottom: 18px; }
+        .modal p  { color: var(--muted); font-size: 0.88rem; margin-bottom: 16px; }
+        .modal-info { background: var(--card2); border-radius: 10px; padding: 14px; margin-bottom: 18px; }
+        .modal-info .row { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 4px 0; }
+        .modal-info .row .k { color: var(--muted); }
+        .modal-info .row .v { font-weight: 600; }
+        .modal textarea {
+            width: 100%; background: var(--card2); border: 1px solid var(--border);
+            border-radius: 10px; padding: 12px; color: var(--text);
+            font-size: 0.88rem; font-family: 'Inter', sans-serif; outline: none;
+            resize: vertical; min-height: 80px; transition: border-color 0.2s;
+        }
+        .modal textarea:focus { border-color: var(--primary); }
+        .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+        .btn-cancel { padding: 9px 18px; border-radius: 8px; font-size: 0.85rem; font-weight: 700; border: 1px solid var(--border); background: none; color: var(--muted); cursor: pointer; font-family: 'Inter', sans-serif; }
+        .btn-cancel:hover { border-color: var(--text); color: var(--text); }
+        .btn-confirm-approve { padding: 9px 18px; border-radius: 8px; font-size: 0.85rem; font-weight: 700; border: none; background: var(--success); color: #fff; cursor: pointer; font-family: 'Inter', sans-serif; }
+        .btn-confirm-reject  { padding: 9px 18px; border-radius: 8px; font-size: 0.85rem; font-weight: 700; border: none; background: var(--danger);  color: #fff; cursor: pointer; font-family: 'Inter', sans-serif; }
+        .btn-confirm-refund  { padding: 9px 18px; border-radius: 8px; font-size: 0.85rem; font-weight: 700; border: none; background: var(--teal);    color: #fff; cursor: pointer; font-family: 'Inter', sans-serif; }
+
+        /* ── Toast ── */
+        .toast {
+            position: fixed; bottom: 24px; right: 24px; z-index: 999;
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 12px; padding: 14px 20px;
+            font-size: 0.88rem; font-weight: 600;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            transform: translateY(80px); opacity: 0;
+            transition: all 0.35s; max-width: 320px;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.success { border-left: 4px solid var(--success); }
+        .toast.error   { border-left: 4px solid var(--danger); }
+
+        /* ── Empty ── */
+        .empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+        .empty .icon { font-size: 3.5rem; margin-bottom: 14px; }
+        .empty h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 6px; color: var(--text); }
+
+        /* ── Spinner ── */
+        .spin { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .divider { height: 1px; background: var(--border); margin: 4px 0 14px; }
+        .loading-bar { height: 3px; background: linear-gradient(90deg, var(--primary), var(--primary-dark)); border-radius: 2px; width: 100%; animation: load 1.5s ease-in-out infinite; }
+        @keyframes load { 0%{width:0} 50%{width:70%} 100%{width:100%} }
+    </style>
+</head>
+<body>
+
+<div class="layout">
+
+    <!-- ── Sidebar ── -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">📱 MobileHub <span>Admin</span></div>
+
+        <div class="nav-section">Dashboard</div>
+        <button class="nav-item active" onclick="setFilter('all')">
+            <span class="icon">📊</span> All Returns
+        </button>
+
+        <div class="nav-section">Filter by Status</div>
+        <button class="nav-item" onclick="setFilter('pending')">
+            <span class="icon">⏳</span> Pending
+            <span id="sidebarPending" class="sidebar-badge" style="display:none">0</span>
+        </button>
+        <button class="nav-item" onclick="setFilter('approved')">
+            <span class="icon">✅</span> Approved
+        </button>
+        <button class="nav-item" onclick="setFilter('rejected')">
+            <span class="icon">❌</span> Rejected
+        </button>
+        <button class="nav-item" onclick="setFilter('refund')">
+            <span class="icon">💳</span> Refund Done
+        </button>
+
+        <div class="nav-section">Store</div>
+        <button class="nav-item" onclick="window.open('index.html')">
+            <span class="icon">🏠</span> Storefront
+        </button>
+        <button class="nav-item" onclick="window.open('orders.html')">
+            <span class="icon">📦</span> Customer Orders
+        </button>
+
+        <div class="sidebar-footer">
+            MobileHub Admin v2.0<br>
+            <span style="color:var(--primary); font-weight:700;">Returns Module</span>
+        </div>
+    </aside>
+
+    <!-- ── Main ── -->
+    <main class="main">
+
+        <div class="topbar">
+            <div style="display:flex; align-items:center; gap:14px;">
+                <button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()">☰</button>
+                <div>
+                    <h1 id="pageTitle">All Return Requests</h1>
+                    <div style="font-size:0.8rem; color:var(--muted); margin-top:2px;" id="lastUpdated">Loading…</div>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <button class="refresh-btn" onclick="loadReturns()">🔄 Refresh</button>
+                <a href="index.html" style="color:var(--muted); text-decoration:none; font-size:0.82rem;">← Store</a>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card total">
+                <div class="stat-icon">📊</div>
+                <div class="stat-num" id="st-total">—</div>
+                <div class="stat-lbl">Total Returns</div>
+            </div>
+            <div class="stat-card pending">
+                <div class="stat-icon">⏳</div>
+                <div class="stat-num" id="st-pending">—</div>
+                <div class="stat-lbl">Pending</div>
+            </div>
+            <div class="stat-card approved">
+                <div class="stat-icon">✅</div>
+                <div class="stat-num" id="st-approved">—</div>
+                <div class="stat-lbl">Approved</div>
+            </div>
+            <div class="stat-card rejected">
+                <div class="stat-icon">❌</div>
+                <div class="stat-num" id="st-rejected">—</div>
+                <div class="stat-lbl">Rejected</div>
+            </div>
+            <div class="stat-card refund">
+                <div class="stat-icon">💳</div>
+                <div class="stat-num" id="st-refund">—</div>
+                <div class="stat-lbl">Refund Done</div>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar">
+            <button class="filter-btn active" id="fb-all"     onclick="setFilter('all')">All</button>
+            <button class="filter-btn"        id="fb-pending" onclick="setFilter('pending')">⏳ Pending</button>
+            <button class="filter-btn"        id="fb-approved" onclick="setFilter('approved')">✅ Approved</button>
+            <button class="filter-btn"        id="fb-rejected" onclick="setFilter('rejected')">❌ Rejected</button>
+            <button class="filter-btn"        id="fb-refund"  onclick="setFilter('refund')">💳 Refund Done</button>
+            <input type="text" class="search-input" id="searchInput" placeholder="🔍 Search customer, product…" oninput="renderFiltered()">
+        </div>
+
+        <!-- Loading Bar -->
+        <div id="loadingBar" style="display:none; margin-bottom:14px;"><div class="loading-bar"></div></div>
+
+        <!-- Returns List -->
+        <div class="returns-grid" id="returnsGrid"></div>
+
+    </main>
+</div>
+
+<!-- ── Modal ── -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this) closeModal()">
+    <div class="modal" id="modal">
+        <h3 id="modalTitle">Confirm Action</h3>
+        <p id="modalDesc"></p>
+        <div class="modal-info" id="modalInfo"></div>
+        <label style="font-size:0.8rem; font-weight:600; color:var(--muted); display:block; margin-bottom:6px;">Admin Notes (optional)</label>
+        <textarea id="adminNotes" placeholder="Add a note for the customer or for records…"></textarea>
+        <div class="modal-footer" id="modalFooter"></div>
+    </div>
+</div>
+
+<!-- ── Toast ── -->
+<div class="toast" id="toast"></div>
+
+<script src="config.js"></script>
+<script>
+    let allReturns    = [];
+    let activeFilter  = 'all';
+    let pendingAction = null;
+
+    // ── Sidebar toggle (mobile) ──
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('open');
+    }
+
+    function fmt(d) {
+        if (!d) return '—';
+        return new Date(d).toLocaleString('en-IN', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    }
+    function rupee(n) { return '₹' + parseFloat(n || 0).toLocaleString('en-IN'); }
+
+    function badgeHTML(status, type='return') {
+        const map = {
+            pending:   ['b-pending',  '⏳ Pending'],
+            approved:  ['b-approved', '✅ Approved'],
+            rejected:  ['b-rejected', '❌ Rejected'],
+            completed: ['b-completed','💳 Refund Done'],
+        };
+        const [cls, lbl] = map[status] || ['b-pending', status];
+        return `<span class="badge ${cls}">${lbl}</span>`;
+    }
+
+    // ── Filter helpers ──
+    function setFilter(f) {
+        activeFilter = f;
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        const el = document.getElementById(`fb-${f}`);
+        if (el) el.classList.add('active');
+
+        const titles = { all:'All Return Requests', pending:'Pending Returns', approved:'Approved Returns', rejected:'Rejected Returns', refund:'Refund Completed' };
+        document.getElementById('pageTitle').textContent = titles[f] || 'Returns';
+
+        // Sidebar active
+        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+        renderFiltered();
+    }
+
+    function renderFiltered() {
+        const search = (document.getElementById('searchInput').value || '').toLowerCase();
+        let filtered = allReturns;
+
+        if (activeFilter === 'pending')  filtered = filtered.filter(r => r.return_status === 'pending');
+        if (activeFilter === 'approved') filtered = filtered.filter(r => r.return_status === 'approved');
+        if (activeFilter === 'rejected') filtered = filtered.filter(r => r.return_status === 'rejected');
+        if (activeFilter === 'refund')   filtered = filtered.filter(r => r.refund_status  === 'completed');
+
+        if (search) {
+            filtered = filtered.filter(r =>
+                r.customer_name?.toLowerCase().includes(search) ||
+                r.customer_email?.toLowerCase().includes(search) ||
+                r.mobile_brand?.toLowerCase().includes(search) ||
+                r.mobile_model?.toLowerCase().includes(search) ||
+                r.return_id?.toLowerCase().includes(search) ||
+                r.order_id?.toLowerCase().includes(search)
+            );
+        }
+
+        renderCards(filtered);
+    }
+
+    function renderCards(returns) {
+        const grid = document.getElementById('returnsGrid');
+        if (returns.length === 0) {
+            grid.innerHTML = `<div class="empty"><div class="icon">📭</div><h3>No returns found</h3><p>No return requests match the current filter.</p></div>`;
+            return;
+        }
+
+        grid.innerHTML = returns.map((r, i) => {
+            const rs = r.return_status;
+            const rf = r.refund_status;
+            const canApprove = rs === 'pending';
+            const canReject  = rs === 'pending';
+            const canRefund  = rs === 'approved' && rf !== 'completed';
+
+            return `
+            <div class="return-card" style="animation-delay:${i * 0.05}s" id="card-${r.return_id}">
+                <div class="rc-header">
+                    <div class="rc-ids">
+                        <div class="rc-return-id">RETURN: ${r.return_id}</div>
+                        <div class="rc-customer">${r.customer_name}</div>
+                        <div class="rc-email">${r.customer_email}</div>
+                    </div>
+                    <div class="badges">
+                        ${badgeHTML(rs)}
+                        ${rf === 'completed' ? badgeHTML('completed') : ''}
+                    </div>
+                </div>
+                <div class="rc-meta">
+                    <div class="meta-item">
+                        <div class="lbl">Product</div>
+                        <div class="val">${r.mobile_brand} ${r.mobile_model}</div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="lbl">Order ID</div>
+                        <div class="val" style="font-size:0.75rem">${r.order_id}</div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="lbl">Amount</div>
+                        <div class="val price">${rupee(r.refund_amount || r.total_amount)}</div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="lbl">Reason</div>
+                        <div class="val">${r.reason}</div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="lbl">Requested</div>
+                        <div class="val">${fmt(r.request_date)}</div>
+                    </div>
+                    ${r.admin_notes ? `<div class="meta-item">
+                        <div class="lbl">Admin Notes</div>
+                        <div class="val" style="font-style:italic;color:var(--muted)">"${r.admin_notes}"</div>
+                    </div>` : ''}
+                </div>
+                <div class="rc-footer">
+                    <button class="action-btn btn-view" onclick="openCustomerDetails('${r.return_id}')">👤 Details</button>
+                    ${canApprove ? `<button class="action-btn btn-approve" id="approve-${r.return_id}" onclick="openModal('approve','${r.return_id}')">✅ Approve</button>` : ''}
+                    ${canReject  ? `<button class="action-btn btn-reject"  id="reject-${r.return_id}"  onclick="openModal('reject', '${r.return_id}')">❌ Reject</button>`  : ''}
+                    ${canRefund  ? `<button class="action-btn btn-refund"  id="refund-${r.return_id}"  onclick="openModal('refund', '${r.return_id}')">💳 Mark Refund Done</button>` : ''}
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    // ── Load Data ──
+    async function loadReturns() {
+        document.getElementById('loadingBar').style.display = 'block';
+        try {
+            const res  = await fetch(getApiUrl(API_CONFIG.ENDPOINTS.ADMIN_RETURNS));
+            const data = await res.json();
+            document.getElementById('loadingBar').style.display = 'none';
+
+            if (!data.success) { showToast('Failed to load returns', 'error'); return; }
+
+            allReturns = data.returns;
+
+            // Stats
+            const s = data.stats;
+            document.getElementById('st-total').textContent    = s.total    || 0;
+            document.getElementById('st-pending').textContent  = s.pending  || 0;
+            document.getElementById('st-approved').textContent = s.approved || 0;
+            document.getElementById('st-rejected').textContent = s.rejected || 0;
+            document.getElementById('st-refund').textContent   = s.refund_completed || 0;
+
+            // Sidebar pending badge
+            const pb = document.getElementById('sidebarPending');
+            if (parseInt(s.pending) > 0) { pb.textContent = s.pending; pb.style.display = 'inline'; }
+            else                          { pb.style.display = 'none'; }
+
+            document.getElementById('lastUpdated').textContent = `Last updated: ${new Date().toLocaleTimeString('en-IN')}`;
+            renderFiltered();
+
+        } catch(e) {
+            document.getElementById('loadingBar').style.display = 'none';
+            document.getElementById('returnsGrid').innerHTML = `
+                <div class="empty">
+                    <div class="icon">🔌</div>
+                    <h3>Cannot Connect to Server</h3>
+                    <p>Make sure the backend is running on port 4000.</p>
+                </div>`;
+        }
+    }
+
+    // ── Modal ──
+    function openModal(action, returnId) {
+        const ret = allReturns.find(r => r.return_id === returnId);
+        if (!ret) return;
+
+        pendingAction = { action, returnId };
+        document.getElementById('adminNotes').value = '';
+
+        const configs = {
+            approve: {
+                title: '✅ Approve Return Request',
+                desc:  'Are you sure you want to approve this return? The customer will be notified to ship back the device.',
+                btnHTML: `<button class="action-btn btn-cancel" onclick="closeModal()">Cancel</button>
+                          <button class="btn-confirm-approve" onclick="executeAction()">✅ Approve Return</button>`
+            },
+            reject: {
+                title: '❌ Reject Return Request',
+                desc:  'Are you sure you want to reject this return request?',
+                btnHTML: `<button class="action-btn btn-cancel" onclick="closeModal()">Cancel</button>
+                          <button class="btn-confirm-reject" onclick="executeAction()">❌ Reject Return</button>`
+            },
+            refund: {
+                title: '💳 Mark Refund as Completed',
+                desc:  `You are about to mark a refund of ${rupee(ret.refund_amount || ret.total_amount)} as processed. This should only be done after receiving the device and processing the payment.`,
+                btnHTML: `<button class="action-btn btn-cancel" onclick="closeModal()">Cancel</button>
+                          <button class="btn-confirm-refund" onclick="executeAction()">💳 Confirm Refund</button>`
+            }
+        };
+
+        const cfg = configs[action];
+        document.getElementById('modalTitle').textContent   = cfg.title;
+        document.getElementById('modalDesc').textContent    = cfg.desc;
+        document.getElementById('modalFooter').innerHTML    = cfg.btnHTML;
+        document.getElementById('modalInfo').innerHTML = `
+            <div class="row"><span class="k">Customer</span><span class="v">${ret.customer_name}</span></div>
+            <div class="row"><span class="k">Email</span><span class="v">${ret.customer_email}</span></div>
+            <div class="row"><span class="k">Product</span><span class="v">${ret.mobile_brand} ${ret.mobile_model}</span></div>
+            <div class="row"><span class="k">Reason</span><span class="v">${ret.reason}</span></div>
+            <div class="row"><span class="k">Amount</span><span class="v" style="color:var(--success)">${rupee(ret.refund_amount || ret.total_amount)}</span></div>`;
+
+        document.getElementById('modalOverlay').classList.add('open');
+    }
+
+    function closeModal() {
+        document.getElementById('modalOverlay').classList.remove('open');
+        pendingAction = null;
+    }
+
+    // ── Customer Details ──
+    function openCustomerDetails(returnId) {
+        const ret = allReturns.find(r => r.return_id === returnId);
+        if (!ret) return;
+        pendingAction = null;
+        document.getElementById('modalTitle').textContent = '👤 Customer & Order Details';
+        document.getElementById('modalDesc').textContent  = '';
+        document.getElementById('adminNotes').style.display = 'none';
+        document.querySelector('[for="adminNotes"]') && (document.querySelector('[for="adminNotes"]').style.display = 'none');
+        document.getElementById('modalInfo').innerHTML = `
+            <div class="row"><span class="k">Return ID</span><span class="v" style="font-size:0.75rem">${ret.return_id}</span></div>
+            <div class="row"><span class="k">Order ID</span><span class="v" style="font-size:0.75rem">${ret.order_id}</span></div>
+            <div class="row"><span class="k">Customer</span><span class="v">${ret.customer_name}</span></div>
+            <div class="row"><span class="k">Email</span><span class="v">${ret.customer_email}</span></div>
+            <div class="row"><span class="k">Product</span><span class="v">${ret.mobile_brand} ${ret.mobile_model}</span></div>
+            <div class="row"><span class="k">Amount</span><span class="v" style="color:var(--success)">${rupee(ret.total_amount)}</span></div>
+            <div class="row"><span class="k">Purchase Date</span><span class="v">${fmt(ret.purchase_date)}</span></div>
+            <div class="row"><span class="k">Return Reason</span><span class="v">${ret.reason}</span></div>
+            <div class="row"><span class="k">Requested On</span><span class="v">${fmt(ret.request_date)}</span></div>
+            <div class="row"><span class="k">Return Status</span><span class="v">${ret.return_status.toUpperCase()}</span></div>
+            <div class="row"><span class="k">Refund Status</span><span class="v">${ret.refund_status.toUpperCase()}</span></div>
+            ${ret.refund_date ? `<div class="row"><span class="k">Refund Date</span><span class="v">${fmt(ret.refund_date)}</span></div>` : ''}
+            ${ret.admin_notes ? `<div class="row"><span class="k">Admin Notes</span><span class="v" style="font-style:italic">"${ret.admin_notes}"</span></div>` : ''}`;
+        document.getElementById('modalFooter').innerHTML = `<button class="action-btn btn-cancel" onclick="closeModal(); document.getElementById('adminNotes').style.display='block';">Close</button>`;
+        document.getElementById('modalOverlay').classList.add('open');
+    }
+
+    // ── Execute Action ──
+    async function executeAction() {
+        if (!pendingAction) return;
+        const { action, returnId } = pendingAction;
+        const adminNotes = document.getElementById('adminNotes').value.trim();
+        closeModal();
+
+        const endpoints = {
+            approve: `${getApiUrl(API_CONFIG.ENDPOINTS.RETURNS)}/${returnId}/approve`,
+            reject:  `${getApiUrl(API_CONFIG.ENDPOINTS.RETURNS)}/${returnId}/reject`,
+            refund:  `${getApiUrl(API_CONFIG.ENDPOINTS.RETURNS)}/${returnId}/refund`,
+        };
+
+        // Disable buttons on this card
+        ['approve','reject','refund'].forEach(a => {
+            const btn = document.getElementById(`${a}-${returnId}`);
+            if (btn) { btn.disabled = true; btn.innerHTML = `<div class="spin"></div>`; }
+        });
+
+        try {
+            const res  = await fetch(endpoints[action], {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ adminNotes })
+            });
+            const data = await res.json();
+
+            if (!res.ok || !data.success) {
+                showToast('❌ ' + (data.message || 'Action failed'), 'error');
+            } else {
+                const msgs = { approve:'✅ Return approved!', reject:'Return rejected.', refund:'💳 Refund marked as completed!' };
+                showToast(msgs[action], 'success');
+                await loadReturns();
+            }
+        } catch(e) {
+            showToast('❌ Server error. Please try again.', 'error');
+        }
+    }
+
+    // ── Toast ──
+    function showToast(msg, type = 'success') {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.className   = `toast ${type}`;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 3500);
+    }
+
+    // ── Init ──
+    loadReturns();
+
+    // Auto-refresh every 30 seconds
+    setInterval(loadReturns, 30000);
+</script>
+</body>
+</html>

@@ -47,7 +47,7 @@ app.use('/api/orders',   ordersRoutes);
 app.use('/api/returns',  returnsRoutes);
 
 // ── Serve Frontend Static Files ───────────────────────
-const frontendPath = path.join(__dirname, '..', 'front end');
+const frontendPath = path.join(__dirname, '..', 'frontend');
 app.use(express.static(frontendPath));
 
 // Fallback → index.html  (Express 5 uses /{*path})

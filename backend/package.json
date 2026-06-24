@@ -1,16 +1,12 @@
 {
   "name": "mobile",
   "version": "1.0.0",
-  "description": "",
+  "description": "Backend server for MobileHub e-commerce platform using Node.js, Express, and PostgreSQL.",
   "main": "api.js",
   "scripts": {
-<<<<<<< HEAD
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "FOR /F \"tokens=5\" %a IN ('netstat -ano ^| findstr :4000') DO taskkill /PID %a /F & nodemon server.js",
     "start": "node server.js"
-=======
-    "test": "echo \"Error: no test specified\" && exit 1"
->>>>>>> 06bc5639bf6789996e978e8075baf60fb01bd6bc
   },
   "keywords": [],
   "author": "",
@@ -19,13 +15,9 @@
   "dependencies": {
     "body-parser": "^2.2.2",
     "cors": "^2.8.6",
-<<<<<<< HEAD
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "nodemon": "^3.1.14",
-=======
-    "express": "^5.2.1",
->>>>>>> 06bc5639bf6789996e978e8075baf60fb01bd6bc
     "pg": "^8.18.0"
   }
 }
